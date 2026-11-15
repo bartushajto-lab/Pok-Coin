@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PokéClicker Kanto 151</title>
+<style>
+  * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
+  body { margin: 0; font-family: sans-serif; background: #12151c; color: #fff; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 12px; }
+  h1 { margin: 6px 0 12px 0; font-size: 22px; color: #ffcb05; text-shadow: 2px 2px #2a75bb; text-align: center; }
+  .card { background: #1e232e; border-radius: 18px; padding: 14px; width: 100%; max-width: 430px; margin-bottom: 12px; text-align: center; border: 1px solid #2c3342; }
+  .top-stats { display: flex; justify-content: space-around; align-items: center; }
+  .stat-box { font-size: 18px; font-weight: bold; }
+  .coins { color: #ffd700; }
+  .balls { color: #ff5252; }
+  .sub { font-size: 13px; color: #9aa3b2; margin-top: 3px; }
+  .tabs { display: flex; gap: 6px; width: 100%; max-width: 430px; margin-bottom: 12px; }
+  .tab-btn { flex: 1; padding: 11px 4px; border: none; border-radius: 12px; background: #262c3a; color: #9aa3b2; font-weight: bold; font-size: 13px; }
+  .tab-btn.active { background: #2a75bb; color: #fff; }
+  .starter-grid { display: flex; flex-direction: column; gap: 12px; margin-top: 14px; }
+  .starter-card { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 14px 18px; border-radius: 16px; border: 2px solid transparent; text-align: left; color: #fff; }
+  .starter-card.grass { background: #1f472a; border-color: #4caf50; }
+  .starter-card.fire { background: #522121; border-color: #f44336; }
+  .starter-card.water { background: #193759; border-color: #2196f3; }
+  .starter-card img { width: 72px; height: 72px; image-rendering: pixelated; }
+  .badge-type { display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; margin-top: 4px; background: rgba(0,0,0,0.35); }
+  .toast { background: #2a75bb; color: #fff; padding: 10px 14px; border-radius: 12px; font-weight: bold; font-size: 14px; margin-bottom: 10px; width: 100%; max-width: 430px; text-align: center; border: 1px solid #ffcb05; }
+  .combo-bar-wrap { background: #141820; border-radius: 10px; padding: 8px 12px; margin-bottom: 10px; border: 1px solid #2d3546; }
+  .combo-header { display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; margin-bottom: 5px; }
+  .combo-track { width: 100%; height: 8px; background: #262d3d; border-radius: 4px; overflow: hidden; }
+  .combo-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #ffcb05, #ff5722); }
+  .poke-arena { background: #252b38; padding: 16px; border-radius: 18px; border: 2px solid #363f52; }
+  .poke-img { width: 140px; height: 140px; image-rendering: pixelated; }
+  .poke-name { font-size: 22px; font-weight: bold; margin-top: 4px; }
+  .wild-box { background: #27213b; border: 2px solid #ffcb05; }
+  .wild-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .action-btn { width: 100%; padding: 13px; margin-top: 10px; border: none; border-radius: 12px; font-size: 15px; font-weight: bold; background: #ffcb05; color: #14171d; }
+  .action-btn:disabled { background: #363d4d; color: #758096; }
+  .catch-btn { background: #e53935; color: #fff; flex: 2; margin-top: 0; }
+  .run-btn { background: #454d5e; color: #fff; flex: 1; margin-top: 0; }
+  .shop-item { display: flex; align-items: center; justify-content: space-between; background: #161a22; padding: 10px 12px; border-radius: 12px; margin-top: 8px; border: 1px solid #262c3a; }
+  .shop-left { display: flex; align-items: center; gap: 10px; text-align: left; }
+  .shop-left img { width: 48px; height: 48px; image-rendering: pixelated; }
+  .shop-btn { padding: 9px 12px; border: none; border-radius: 10px; font-weight: bold; font-size: 13px; background: #2a75bb; color: #fff; }
+  .shop-btn:disabled { background: #323947; color: #6c768a; }
+  .active-tag { background: #388e3c; padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: bold; }
+  .dex-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; max-height: 440px; overflow-y: auto; margin-top: 10px; }
+  .dex-cell { background: #161a22; border-radius: 10px; padding: 6px 2px; display: flex; flex-direction: column; align-items: center; border: 1px solid #282f3d; }
+  .dex-cell.caught { border-color: #ffcb05; background: #212734; }
+  .dex-cell img { width: 54px; height: 54px; image-rendering: pixelated; }
+  .dex-cell img.silhouette { filter: brightness(0) opacity(0.35); }
+  .dex-num { font-size: 10px; color: #8892a4; }
+  .dex-label { font-size: 11px; font-weight: bold; max-width: 72px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .reset-link { background: none; border: none; color: #6c768a; font-size: 12px; margin-top: 16px; text-decoration: underline; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<h1>⚡ PokéClicker: Kanto 151 ⚡</h1>
+<div id="toast-msg" class="toast hidden"></div>
+<div id="starter-screen" class="card">
+  <h2 style="margin-bottom:4px;">Witaj w świecie Pokémon!</h2>
+  <p class="sub">Kliknij swojego pierwszego partnera:</p>
+  <div class="starter-grid">
+    <button type="button" class="starter-card grass" onclick="startWithStarter(1)">
+      <div><div style="font-size:20px;font-weight:bold;color:#81c784;">#001 Bulbasaur</div><span class="badge-type" style="color:#a5d6a7;">🌿 Trawiasty</span></div>
+      <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png">
+    </button>
+    <button type="button" class="starter-card fire" onclick="startWithStarter(4)">
+      <div><div style="font-size:20px;font-weight:bold;color:#e57373;">#004 Charmander</div><span class="badge-type" style="color:#ef9a9a;">🔥 Ognisty</span></div>
+      <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/4.png">
+    </button>
+    <button type="button" class="starter-card water" onclick="startWithStarter(7)">
+      <div><div style="font-size:20px;font-weight:bold;color:#64b5f6;">#007 Squirtle</div><span class="badge-type" style="color:#90caf9;">💧 Wodny</span></div>
+      <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/7.png">
+    </button>
+  </div>
+</div>
+<div id="game-screen" class="hidden" style="width:100%;max-width:430px;">
+  <div class="card top-stats">
+    <div><div class="stat-box coins">💰 <span id="coins-text">0</span></div><div class="sub">+<span id="click-power-text">1</span> / klik</div></div>
+    <div><div class="stat-box" style="color:#ff9800;">⚡ x<span id="total-mult-text">1.0</span></div><div class="sub">Mnożnik</div></div>
+    <div><div class="stat-box balls">🔴 <span id="balls-text">3</span></div><div class="sub">Balle</div></div>
+    <div><div class="stat-box" style="color:#64b5f6;">📖 <span id="dex-count-text">1</span>/151</div><div class="sub">Złapane</div></div>
+  </div>
+  <div class="tabs">
+    <button type="button" id="tab-train" class="tab-btn active" onclick="switchTab('train')">⚔️ Trening</button>
+    <button type="button" id="tab-shop" class="tab-btn" onclick="switchTab('shop')">🛒 Sklep & Drużyna</button>
+    <button type="button" id="tab-dex" class="tab-btn" onclick="switchTab('dex')">📖 Pokédex (151)</button>
+  </div>
+  <div id="view-train">
+    <div id="wild-encounter" class="card wild-box hidden">
+      <div style="font-weight:bold;color:#ffcb05;">🌿 DZIKI POKÉMON!</div>
+      <img id="wild-img" src="" width="110" style="image-rendering:pixelated;">
+      <div id="wild-name" style="font-size:18px;font-weight:bold;">Pidgey</div>
+      <div id="wild-info" class="sub">Szansa: 60% | Rzuty: 3</div>
+      <div class="wild-actions">
+        <button type="button" id="throw-ball-btn" class="action-btn catch-btn" onclick="throwBall()">🔴 Rzuć Ball</button>
+        <button type="button" class="action-btn run-btn" onclick="fleeWild()">Ucieknij</button>
+      </div>
+    </div>
+    <div class="card poke-arena" onclick="clickPoke()">
+      <div class="combo-bar-wrap">
+        <div class="combo-header"><span style="color:#ff9800;">🔥 Combo: x<span id="combo-mult-text">1.0</span></span><span style="color:#9aa3b2;">Stały: x<span id="perm-mult-text">1.0</span></span></div>
+        <div class="combo-track"><div id="combo-fill" class="combo-fill"></div></div>
+      </div>
+      <img id="active-img" class="poke-img" src="">
+      <div id="active-name" class="poke-name">Pokemon</div>
+      <div class="sub">Klikaj szybko, aby nabijać Combo!</div>
+      <button type="button" id="evolve-btn" class="action-btn" onclick="event.stopPropagation(); evolvePoke()">Ewoluuj</button>
+    </div>
+  </div>
+  <div id="view-shop" class="hidden">
+    <div class="card">
+      <h3 style="margin:0 0 6px 0;">🏪 Poké Mart & Ulepszenia</h3>
+      <div class="shop-item">
+        <div class="shop-left"><img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png"><div><strong>Poké Ball (x1)</strong><br><span class="sub">Łapanie dzikich</span></div></div>
+        <button type="button" id="buy-ball-btn" class="shop-btn" onclick="buyBall()">Kup (150 💰)</button>
+      </div>
+      <div class="shop-item">
+        <div class="shop-left"><img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/rare-candy.png"><div><strong>Trening (+0.5x)</strong><br><span class="sub">Poz. <span id="mult-lvl-text">0</span></span></div></div>
+        <button type="button" id="buy-mult-btn" class="shop-btn" onclick="buyMult()">Kup (250 💰)</button>
+      </div>
+    </div>
+    <div class="card"><h3 style="margin:0 0 6px 0;">🎒 Twoja Drużyna</h3><div id="team-list"></div></div>
+  </div>
+  <div id="view-dex" class="hidden">
+    <div class="card"><h3 style="margin:0;">📖 Pokédex Kanto</h3><div class="sub">Odkryto: <span id="dex-progress">1</span> / 151</div><div id="dex-grid" class="dex-grid"></div></div>
+  </div>
+  <div style="text-align:center;"><button type="button" class="reset-link" onclick="resetSave()">Resetuj zapis gry</button></div>
+</div>
+<script>
+const KANTO_NAMES = ["","Bulbasaur","Ivysaur","Venusaur","Charmander","Charmeleon","Charizard","Squirtle","Wartortle","Blastoise","Caterpie","Metapod","Butterfree","Weedle","Kakuna","Beedrill","Pidgey","Pidgeotto","Pidgeot","Rattata","Raticate","Spearow","Fearow","Ekans","Arbok","Pikachu","Raichu","Sandshrew","Sandslash","Nidoran♀","Nidorina","Nidoqueen","Nidoran♂","Nidorino","Nidoking","Clefairy","Clefable","Vulpix","Ninetales","Jigglypuff","Wigglytuff","Zubat","Golbat","Oddish","Gloom","Vileplume","Paras","Parasect","Venonat","Venomoth","Diglett","Dugtrio","Meowth","Persian","Psyduck","Golduck","Mankey","Primeape","Growlithe","Arcanine","Poliwag","Poliwhirl","Poliwrath","Abra","Kadabra","Alakazam","Machop","Machoke","Machamp","Bellsprout","Weepinbell","Victreebel","Tentacool","Tentacruel","Geodude","Graveler","Golem","Ponyta","Rapidash","Slowpoke","Slowbro","Magnemite","Magneton","Farfetch'd","Doduo","Dodrio","Seel","Dewgong","Grimer","Muk","Shellder","Cloyster","Gastly","Haunter","Gengar","Onix","Drowzee","Hypno","Krabby","Kingler","Voltorb","Electrode","Exeggcute","Exeggutor","Cubone","Marowak","Hitmonlee","Hitmonchan","Lickitung","Koffing","Weezing","Rhyhorn","Rhydon","Chansey","Tangela","Kangaskhan","Horsea","Seadra","Goldeen","Seaking","Staryu","Starmie","Mr. Mime","Scyther","Jynx","Electabuzz","Magmar","Pinsir","Tauros","Magikarp","Gyarados","Lapras","Ditto","Eevee","Vaporeon","Jolteon","Flareon","Porygon","Omanyte","Omastar","Kabuto","Kabutops","Aerodactyl","Snorlax","Articuno","Zapdos","Moltres","Dratini","Dragonair","Dragonite","Mewtwo","Mew"];
+const EVOLUTIONS = {1:[2,300],2:[3,1500],4:[5,300],5:[6,1500],7:[8,300],8:[9,1500],10:[11,150],11:[12,600],13:[14,150],14:[15,600],16:[17,350],17:[18,1600],19:[20,400],21:[22,550],23:[24,650],25:[26,2000],27:[28,750],29:[30,450],30:[31,2200],32:[33,450],33:[34,2200],35:[36,1400],37:[38,1500],39:[40,1300],41:[42,700],43:[44,500],44:[45,2000],46:[47,750],48:[49,850],50:[51,950],52:[53,1000],54:[55,1100],56:[57,1100],58:[59,2800],60:[61,600],61:[62,2400],63:[64,900],64:[65,3800],66:[67,900],67:[68,3800],69:[70,600],70:[71,2400],72:[73,1200],74:[75,850],75:[76,3200],77:[78,1600],79:[80,1500],81:[82,1400],84:[85,1200],86:[87,1500],88:[89,1600],90:[91,1800],92:[93,1200],93:[94,4500],96:[97,1200],98:[99,1300],100:[101,1400],102:[103,2200],104:[105,1500],109:[110,1600],111:[112,2500],116:[117,1500],118:[119,1200],120:[121,2200],129:[130,5000],133:[134,2500],138:[139,3000],140:[141,3000],147:[148,6000],148:[149,20000]};
+const LEGENDARY_IDS = [144,145,146,150,151];
+const RARE_IDS = [3,6,9,65,68,76,94,112,130,131,134,135,136,142,143,149];
+const SAVE_KEY = "pokeclicker_kanto_v6";
+
+let state = { coins: 0, balls: 3, activeDex: 1, team: [], caught: [], multLevel: 0 };
+let wildPokemon = null, currentTab = "train", comboEnergy = 0, toastTimer = null;
+
+function showToast(msg) {
+  const el = document.getElementById("toast-msg");
+  el.innerText = msg; el.classList.remove("hidden");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.add("hidden"), 2500);
+}
+const getBasePower = d => LEGENDARY_IDS.includes(d) ? 180 : RARE_IDS.includes(d) ? 55 : Math.max(1, Math.floor(d / 12)) * (!EVOLUTIONS[d] ? 2 : 1);
+const getPermMult = () => 1 + (state.multLevel * 0.5);
+const getComboMult = () => 1 + (Math.floor(comboEnergy / 25) * 0.5);
+const getClickPower = d => Math.max(1, Math.round(getBasePower(d) * getPermMult() * getComboMult()));
+const getMultPrice = () => Math.round(250 * Math.pow(1.8, state.multLevel));
+const getSprite = d => `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${d}.png`;
+
+setInterval(() => { if (comboEnergy > 0) { comboEnergy = Math.max(0, comboEnergy - 4); updateComboUI(); } }, 150);
+
+function updateComboUI() {
+  const fill = document.getElementById("combo-fill");
+  if (!fill) return;
+  fill.style.width = comboEnergy + "%";
+  document.getElementById("combo-mult-text").innerText = getComboMult().toFixed(1);
+  document.getElementById("total-mult-text").innerText = (getComboMult() * getPermMult()).toFixed(1);
+  if (state.team.length > 0) document.getElementById("click-power-text").innerText = getClickPower(state.activeDex);
+}
+function saveGame() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (e) {} }function loadGame() {
+  try {
+    const loaded = JSON.parse(localStorage.getItem(SAVE_KEY));
+    if (loaded && loaded.team && loaded.team.length > 0) {
+      state = { multLevel: 0, ...loaded };
+      document.getElementById("starter-screen").classList.add("hidden");
+      document.getElementById("game-screen").classList.remove("hidden");
+      render(); return;
+    }
+  } catch (e) {}
+  document.getElementById("starter-screen").classList.remove("hidden");
+}
+function startWithStarter(dex) {
+  state = { coins: 0, balls: 3, activeDex: dex, team: [dex], caught: [dex], multLevel: 0 };
+  saveGame();
+  document.getElementById("starter-screen").classList.add("hidden");
+  document.getElementById("game-screen").classList.remove("hidden");
+  showToast(`Wybrałeś ${KANTO_NAMES[dex]}!`); render();
+}
+function clickPoke() {
+  comboEnergy = Math.min(100, comboEnergy + 9);
+  state.coins += getClickPower(state.activeDex);
+  if (!wildPokemon && Math.random() < 0.14) {
+    let dex = Math.floor(Math.random() * 151) + 1;
+    if (LEGENDARY_IDS.includes(dex) && Math.random() < 0.8) dex = Math.floor(Math.random() * 143) + 1;
+    wildPokemon = { dex: dex, catchRate: LEGENDARY_IDS.includes(dex) ? 0.22 : RARE_IDS.includes(dex) ? 0.38 : 0.60, tries: 3 };
+  }
+  saveGame(); render();
+}
+function throwBall() {
+  if (!wildPokemon || state.balls <= 0) return;
+  state.balls--;
+  if (Math.random() < wildPokemon.catchRate) {
+    const d = wildPokemon.dex;
+    if (!state.team.includes(d)) state.team.push(d);
+    if (!state.caught.includes(d)) state.caught.push(d);
+    wildPokemon = null; showToast(`🎉 Złapałeś: ${KANTO_NAMES[d]}!`);
+  } else if (--wildPokemon.tries <= 0) {
+    const n = KANTO_NAMES[wildPokemon.dex]; wildPokemon = null; showToast(`💨 Dziki ${n} uciekł!`);
+  } else showToast(`❌ Pudło! Pozostałe próby: ${wildPokemon.tries}`);
+  saveGame(); render();
+}
+function fleeWild() { wildPokemon = null; render(); }
+function evolvePoke() {
+  const evo = EVOLUTIONS[state.activeDex];
+  if (evo && state.coins >= evo[1]) {
+    state.coins -= evo[1];
+    const idx = state.team.indexOf(state.activeDex);
+    if (idx !== -1) state.team[idx] = evo[0];
+    state.activeDex = evo[0];
+    if (!state.caught.includes(evo[0])) state.caught.push(evo[0]);
+    showToast(`✨ Ewolucja w ${KANTO_NAMES[evo[0]]}!`); saveGame(); render();
+  }
+}
+function buyBall() { if (state.coins >= 150) { state.coins -= 150; state.balls++; saveGame(); render(); } }
+function buyMult() { const p = getMultPrice(); if (state.coins >= p) { state.coins -= p; state.multLevel++; saveGame(); render(); } }
+function selectPoke(dex) { state.activeDex = dex; saveGame(); switchTab("train"); }
+function resetSave() { try { localStorage.removeItem(SAVE_KEY); } catch(e){} location.reload(); }
+function switchTab(tab) {
+  currentTab = tab;
+  ["train", "shop", "dex"].forEach(t => {
+    document.getElementById(`view-${t}`).classList.toggle("hidden", t !== tab);
+    document.getElementById(`tab-${t}`).classList.toggle("active", t === tab);
+  });
+  render();
+}
+function render() {
+  document.getElementById("coins-text").innerText = state.coins;
+  document.getElementById("balls-text").innerText = state.balls;
+  document.getElementById("dex-count-text").innerText = state.caught.length;
+  document.getElementById("perm-mult-text").innerText = getPermMult().toFixed(1);
+  updateComboUI();
+  document.getElementById("active-img").src = getSprite(state.activeDex);
+  document.getElementById("active-name").innerText = `#${String(state.activeDex).padStart(3,'0')} ${KANTO_NAMES[state.activeDex]}`;
+  const evoBtn = document.getElementById("evolve-btn"), evo = EVOLUTIONS[state.activeDex];
+  if (!evo) { evoBtn.innerText = "⭐ MAKSYMALNA EWOLUCJA"; evoBtn.disabled = true; }
+  else { evoBtn.innerText = `✨ Ewoluuj w ${KANTO_NAMES[evo[0]]} (${evo[1]} 💰)`; evoBtn.disabled = state.coins < evo[1]; }
+  const wildBox = document.getElementById("wild-encounter");
+  if (wildPokemon) {
+    wildBox.classList.remove("hidden");
+    document.getElementById("wild-img").src = getSprite(wildPokemon.dex);
+    document.getElementById("wild-name").innerText = KANTO_NAMES[wildPokemon.dex] + (!state.caught.includes(wildPokemon.dex) ? " 🆕" : "");
+    document.getElementById("wild-info").innerText = `Szansa: ${Math.round(wildPokemon.catchRate * 100)}% | Rzuty: ${wildPokemon.tries}`;
+    const throwBtn = document.getElementById("throw-ball-btn");
+    throwBtn.disabled = state.balls <= 0;
+    throwBtn.innerText = state.balls > 0 ? `🔴 Rzuć Poké Ball (${state.balls})` : "Brak Poké Balli!";
+  } else wildBox.classList.add("hidden");
+  if (currentTab === "shop") {
+    document.getElementById("buy-ball-btn").disabled = state.coins < 150;
+    const mPrice = getMultPrice();
+    document.getElementById("mult-lvl-text").innerText = state.multLevel;
+    const mBtn = document.getElementById("buy-mult-btn");
+    mBtn.innerText = `Kup (${mPrice} 💰)`; mBtn.disabled = state.coins < mPrice;
+    const sorted = [...state.team].sort((a, b) => getBasePower(b) - getBasePower(a));
+    document.getElementById("team-list").innerHTML = sorted.map(dex => `<div class="shop-item"><div class="shop-left"><img src="${getSprite(dex)}"><div><strong>${KANTO_NAMES[dex]}</strong><br><span class="sub">+${getClickPower(dex)} 💰 / klik</span></div></div>${dex === state.activeDex ? `<span class="active-tag">AKTYWNY</span>` : `<button type="button" class="shop-btn" onclick="selectPoke(${dex})">Wybierz</button>`}</div>`).join("");
+  }
+  if (currentTab === "dex") {
+    document.getElementById("dex-progress").innerText = state.caught.length;
+    let html = "";
+    for (let i = 1; i <= 151; i++) {
+      const ok = state.caught.includes(i);
+      html += `<div class="dex-cell ${ok ? "caught" : ""}"><span class="dex-num">#${String(i).padStart(3,"0")}</span><img class="${ok ? "" : "silhouette"}" src="${getSprite(i)}" loading="lazy"><span class="dex-label">${ok ? KANTO_NAMES[i] : "???"}</span></div>`;
+    }
+    document.getElementById("dex-grid").innerHTML = html;
+  }
+}
+loadGame();
+</script>
+</body>
+</html>
