@@ -1,0 +1,2967 @@
+<!DOCTYPE html>
+<html lang="pl" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PokèClicker V2.5 — Kolekcjonerska Gra Pokémon</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Font: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        space: '#090d16',
+                        panel: 'rgba(17, 24, 39, 0.65)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* =========================================================
+           GLOBALNE STYLE, DARK MODE & GLASSMORPHISM
+        ========================================================= */
+        :root {
+            --bg-main: #090d16;
+            --glass-bg: rgba(18, 25, 43, 0.64);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: #f1f5f9;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image:
+                radial-gradient(circle at 12% 15%, rgba(56, 189, 248, 0.14) 0%, transparent 40%),
+                radial-gradient(circle at 88% 20%, rgba(168, 85, 247, 0.15) 0%, transparent 42%),
+                radial-gradient(circle at 50% 85%, rgba(236, 72, 153, 0.1) 0%, transparent 45%);
+            background-attachment: fixed;
+        }
+
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+        }
+
+        .glass-strong {
+            background: rgba(13, 19, 34, 0.88);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+        }
+
+        ::-webkit-scrollbar {
+            width: 7px;
+            height: 7px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.5);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.35);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.55);
+        }
+
+        /* =========================================================
+           ANIMACJE GRY (FLOAT, POKEBALL, SHINY, WALKA, JAJKA)
+        ========================================================= */
+        @keyframes floatPokemon {
+            0%, 100% { transform: translateY(0px) scale(1); }
+            50% { transform: translateY(-10px) scale(1.02); }
+        }
+        .animate-float {
+            animation: floatPokemon 3.2s ease-in-out infinite;
+        }
+
+        /* Efekt holograficznego połysku dla Shiny */
+        .shiny-card {
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 22px rgba(250, 204, 21, 0.35), inset 0 0 18px rgba(250, 204, 21, 0.15) !important;
+            border-color: rgba(250, 204, 21, 0.72) !important;
+        }
+        .shiny-card::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -75%;
+            width: 55%;
+            height: 200%;
+            background: linear-gradient(
+                115deg,
+                transparent 0%,
+                rgba(255, 255, 255, 0.08) 30%,
+                rgba(254, 240, 138, 0.35) 50%,
+                rgba(192, 132, 252, 0.25) 60%,
+                transparent 80%
+            );
+            transform: rotate(22deg);
+            animation: holoShimmer 3.2s infinite ease-in-out;
+            pointer-events: none;
+            z-index: 5;
+        }
+        @keyframes holoShimmer {
+            0% { left: -85%; }
+            55%, 100% { left: 140%; }
+        }
+
+        @keyframes sparkleTwinkle {
+            0%, 100% { opacity: 0.2; transform: scale(0.7) rotate(0deg); }
+            50% { opacity: 1; transform: scale(1.25) rotate(25deg); }
+        }
+        .shiny-sparkle {
+            animation: sparkleTwinkle 1.6s infinite ease-in-out;
+        }
+
+        /* Rzut i kołysanie Pokéballa */
+        @keyframes ballThrow {
+            0% { transform: translateY(110px) scale(0.5) rotate(0deg); opacity: 0; }
+            40% { transform: translateY(-35px) scale(1.15) rotate(360deg); opacity: 1; }
+            70% { transform: translateY(8px) scale(0.95) rotate(540deg); }
+            100% { transform: translateY(0px) scale(1) rotate(720deg); opacity: 1; }
+        }
+        .animate-ball-throw {
+            animation: ballThrow 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        @keyframes ballShake {
+            0%, 100% { transform: rotate(0deg) translateX(0); }
+            20% { transform: rotate(-22deg) translateX(-8px); }
+            40% { transform: rotate(22deg) translateX(8px); }
+            60% { transform: rotate(-16deg) translateX(-5px); }
+            80% { transform: rotate(12deg) translateX(4px); }
+        }
+        .animate-ball-shake {
+            animation: ballShake 0.7s ease-in-out infinite;
+        }
+
+        @keyframes shrinkIntoBall {
+            0% { transform: scale(1); filter: brightness(1); opacity: 1; }
+            50% { transform: scale(0.55); filter: brightness(3) hue-rotate(-30deg); opacity: 0.8; }
+            100% { transform: scale(0.05); filter: brightness(5); opacity: 0; }
+        }
+        .animate-absorb {
+            animation: shrinkIntoBall 0.45s ease-in forwards;
+        }
+
+        @keyframes hitBlink {
+            0%, 100% { filter: brightness(1); transform: translateX(0); }
+            20% { filter: brightness(2.2) saturate(2) drop-shadow(0 0 12px #ef4444); transform: translateX(-8px); }
+            40% { filter: brightness(0.6); transform: translateX(8px); }
+            60% { filter: brightness(2.2) saturate(2) drop-shadow(0 0 12px #ef4444); transform: translateX(-5px); }
+            80% { filter: brightness(0.8); transform: translateX(4px); }
+        }
+        .animate-hit {
+            animation: hitBlink 0.45s ease-in-out;
+        }
+
+        @keyframes attackLungeRight {
+            0%, 100% { transform: translateX(0); }
+            40% { transform: translateX(35px) scale(1.08); }
+        }
+        .animate-lunge-right {
+            animation: attackLungeRight 0.35s ease-out;
+        }
+        @keyframes attackLungeLeft {
+            0%, 100% { transform: translateX(0); }
+            40% { transform: translateX(-35px) scale(1.08); }
+        }
+        .animate-lunge-left {
+            animation: attackLungeLeft 0.35s ease-out;
+        }
+
+        @keyframes eggWobble {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(-14deg) scale(1.06); }
+            50% { transform: rotate(14deg) scale(1.06); }
+            75% { transform: rotate(-8deg) scale(1.03); }
+        }
+        .animate-egg-wobble {
+            animation: eggWobble 0.32s ease-in-out;
+        }
+        .animate-egg-ready {
+            animation: eggWobble 0.85s ease-in-out infinite;
+        }
+
+        @keyframes floatUpFade {
+            0% { opacity: 1; transform: translate(-50%, 0) scale(0.9); }
+            30% { opacity: 1; transform: translate(-50%, -22px) scale(1.1); }
+            100% { opacity: 0; transform: translate(-50%, -58px) scale(0.95); }
+        }
+        .floating-number {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            font-weight: 800;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.85);
+            animation: floatUpFade 1.1s ease-out forwards;
+        }
+
+        .hp-bar-fill {
+            transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.35s ease;
+        }
+
+        .game-btn {
+            transition: all 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .game-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            filter: brightness(1.08);
+        }
+        .game-btn:active:not(:disabled) {
+            transform: translateY(1px) scale(0.97);
+        }
+        .game-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        /* Przyciemniona sylwetka nieodkrytego Pokémona w Pokédexie */
+        .pokedex-silhouette {
+            filter: brightness(0) invert(0.18) drop-shadow(0 0 6px rgba(148, 163, 184, 0.15));
+            opacity: 0.55;
+        }
+
+        .nav-tab-active {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(168, 85, 247, 0.25));
+            border-color: rgba(125, 211, 252, 0.55);
+            color: #ffffff;
+            box-shadow: 0 0 18px rgba(56, 189, 248, 0.22);
+        }
+    </style>
+</head>
+<body class="pb-24 md:pb-10 select-none">
+
+    <!-- =========================================================
+         GÓRNY PASEK STATUSU (TOP BAR)
+    ========================================================= -->
+    <header class="sticky top-0 z-40 glass-strong border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-3 sm:px-5 py-2.5 flex flex-wrap items-center justify-between gap-2">
+            <!-- Logo -->
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-400 via-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 p-1.5">
+                    <svg class="w-full h-full text-white" viewBox="0 0 100 100" fill="none">
+                        <circle cx="50" cy="50" r="44" stroke="currentColor" stroke-width="8"/>
+                        <path d="M6 50H94" stroke="currentColor" stroke-width="8"/>
+                        <circle cx="50" cy="50" r="14" fill="#090d16" stroke="currentColor" stroke-width="8"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-base sm:text-lg font-black tracking-tight bg-gradient-to-r from-sky-300 via-white to-purple-300 bg-clip-text text-transparent leading-tight">
+                        PokèClicker V2.5
+                    </h1>
+                    <p class="text-[10px] text-slate-400 font-medium hidden sm:block">Wszystkie 9 Generacji • 1025 Pokémonów</p>
+                </div>
+            </div>
+
+            <!-- Statystyki Gracza -->
+            <div class="flex items-center flex-wrap gap-1.5 sm:gap-2.5">
+                <div class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-amber-500/15 border border-amber-400/30">
+                    <i class="fa-solid fa-coins text-amber-400 text-sm"></i>
+                    <span id="ui-coins" class="font-extrabold text-amber-300 text-sm sm:text-base tabular-nums">300</span>
+                </div>
+
+                <div class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-400/30" title="Pasywny zarobek na sekundę">
+                    <i class="fa-solid fa-bolt text-emerald-400 text-xs"></i>
+                    <span id="ui-income" class="font-bold text-emerald-300 text-xs sm:text-sm tabular-nums">+0/s</span>
+                </div>
+
+                <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-purple-500/15 border border-purple-400/30" title="Zdobyte odznaki regionów">
+                    <i class="fa-solid fa-medal text-purple-400 text-xs"></i>
+                    <span id="ui-badges" class="font-bold text-purple-200 text-xs sm:text-sm tabular-nums">0/18</span>
+                </div>
+
+                <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-sky-500/15 border border-sky-400/30" title="Odkryte gatunki w Pokédexie">
+                    <i class="fa-solid fa-book-open text-sky-400 text-xs"></i>
+                    <span id="ui-pokedex" class="font-bold text-sky-200 text-xs sm:text-sm tabular-nums">0/1025</span>
+                </div>
+
+                <div class="flex items-center gap-1 ml-1">
+                    <button onclick="manualSave()" class="game-btn p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white" title="Zapisz grę">
+                        <i class="fa-solid fa-floppy-disk text-xs sm:text-sm"></i>
+                    </button>
+                    <button onclick="openSaveModal()" class="game-btn p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white" title="Eksport / Import zapisu (Base64)">
+                        <i class="fa-solid fa-right-left text-xs sm:text-sm"></i>
+                    </button>
+                    <button id="btn-sound" onclick="toggleSound()" class="game-btn p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white" title="Włącz / Wycisz dźwięki">
+                        <i class="fa-solid fa-volume-high text-xs sm:text-sm"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- =========================================================
+         NAWIGACJA ZAKŁADEK (DESKTOP GÓRA / MOBILE DÓŁ)
+    ========================================================= -->
+    <nav class="hidden md:block max-w-7xl mx-auto px-5 pt-4">
+        <div class="glass rounded-2xl p-1.5 grid grid-cols-6 gap-1.5">
+            <button data-tab="hunt" onclick="switchTab('hunt')" class="nav-btn game-btn py-2.5 px-3 rounded-xl border border-transparent text-sm font-bold text-slate-300 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-crosshairs text-sky-400"></i> Łapanie
+            </button>
+            <button data-tab="collection" onclick="switchTab('collection')" class="nav-btn game-btn py-2.5 px-3 rounded-xl border border-transparent text-sm font-bold text-slate-300 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-box-open text-amber-400"></i> Kolekcja
+            </button>
+            <button data-tab="battle" onclick="switchTab('battle')" class="nav-btn game-btn py-2.5 px-3 rounded-xl border border-transparent text-sm font-bold text-slate-300 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-khanda text-rose-400"></i> Walki
+            </button>
+            <button data-tab="eggs" onclick="switchTab('eggs')" class="nav-btn game-btn py-2.5 px-3 rounded-xl border border-transparent text-sm font-bold text-slate-300 flex items-center justify-center gap-2 relative">
+                <i class="fa-solid fa-egg text-emerald-400"></i> Jajka
+                <span id="nav-egg-badge" class="hidden w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping absolute top-2 right-3"></span>
+            </button>
+            <button data-tab="shop" onclick="switchTab('shop')" class="nav-btn game-btn py-2.5 px-3 rounded-xl border border-transparent text-sm font-bold text-slate-300 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-store text-purple-400"></i> Sklep i Kody
+            </button>
+            <button data-tab="pokedex" onclick="switchTab('pokedex')" class="nav-btn game-btn py-2.5 px-3 rounded-xl border border-transparent text-sm font-bold text-slate-300 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-book text-cyan-400"></i> Pokédex
+            </button>
+        </div>
+    </nav>
+
+    <!-- Dolna nawigacja mobilna -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 glass-strong border-t border-white/10 px-1.5 py-1.5">
+        <div class="grid grid-cols-6 gap-1">
+            <button data-tab="hunt" onclick="switchTab('hunt')" class="nav-btn py-2 rounded-xl border border-transparent text-[10px] font-bold text-slate-400 flex flex-col items-center gap-1">
+                <i class="fa-solid fa-crosshairs text-base"></i><span>Łapanie</span>
+            </button>
+            <button data-tab="collection" onclick="switchTab('collection')" class="nav-btn py-2 rounded-xl border border-transparent text-[10px] font-bold text-slate-400 flex flex-col items-center gap-1">
+                <i class="fa-solid fa-box-open text-base"></i><span>Box</span>
+            </button>
+            <button data-tab="battle" onclick="switchTab('battle')" class="nav-btn py-2 rounded-xl border border-transparent text-[10px] font-bold text-slate-400 flex flex-col items-center gap-1">
+                <i class="fa-solid fa-khanda text-base"></i><span>Walki</span>
+            </button>
+            <button data-tab="eggs" onclick="switchTab('eggs')" class="nav-btn py-2 rounded-xl border border-transparent text-[10px] font-bold text-slate-400 flex flex-col items-center gap-1 relative">
+                <i class="fa-solid fa-egg text-base"></i><span>Jajka</span>
+                <span id="nav-egg-badge-mob" class="hidden w-2 h-2 rounded-full bg-emerald-400 absolute top-1.5 right-2.5"></span>
+            </button>
+            <button data-tab="shop" onclick="switchTab('shop')" class="nav-btn py-2 rounded-xl border border-transparent text-[10px] font-bold text-slate-400 flex flex-col items-center gap-1">
+                <i class="fa-solid fa-store text-base"></i><span>Sklep</span>
+            </button>
+            <button data-tab="pokedex" onclick="switchTab('pokedex')" class="nav-btn py-2 rounded-xl border border-transparent text-[10px] font-bold text-slate-400 flex flex-col items-center gap-1">
+                <i class="fa-solid fa-book text-base"></i><span>Dex</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- =========================================================
+         GŁÓWNA ZAWARTOŚĆ (ZAKŁADKI)
+    ========================================================= -->
+    <main class="max-w-7xl mx-auto px-3 sm:px-5 pt-4 sm:pt-5">
+
+        <!-- =====================================================
+             ZAKŁADKA 1: ŁAPANIE (POLOWANIE)
+        ===================================================== -->
+        <section id="tab-hunt" class="tab-section space-y-5">
+            <!-- Wybór Regionu -->
+            <div class="glass rounded-2xl p-3.5 sm:p-4">
+                <div class="flex items-center justify-between mb-2.5">
+                    <h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                        <i class="fa-solid fa-map-location-dot text-sky-400"></i> Wybierz Region Polowania
+                    </h2>
+                    <span id="hunt-region-info" class="text-xs text-sky-300 font-semibold">Gen 1 • Kanto (#1–#151)</span>
+                </div>
+                <div id="hunt-region-list" class="flex flex-wrap gap-2"></div>
+            </div>
+
+            <!-- Główna Arena Polowania -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+                <!-- Karta Dzikiego Pokémona -->
+                <div class="lg:col-span-7">
+                    <div id="wild-card" class="glass rounded-3xl p-5 sm:p-7 relative overflow-hidden min-h-[400px] flex flex-col justify-between transition-all duration-300">
+                        <div id="wild-type-glow" class="absolute inset-0 opacity-20 pointer-events-none transition-all duration-500"></div>
+
+                        <!-- Górny pasek karty -->
+                        <div class="relative z-10 flex items-start justify-between gap-2">
+                            <div>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span id="wild-id" class="text-xs font-extrabold px-2.5 py-0.5 rounded-lg bg-white/10 text-slate-300">#0000</span>
+                                    <span id="wild-rarity" class="text-xs font-extrabold px-2.5 py-0.5 rounded-lg bg-slate-700 text-white">Szukanie...</span>
+                                    <span id="wild-shiny-badge" class="hidden text-xs font-black px-2.5 py-0.5 rounded-lg bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 text-slate-950 shadow-lg shadow-amber-400/40">
+                                        ✨ SHINY
+                                    </span>
+                                </div>
+                                <h2 id="wild-name" class="text-2xl sm:text-3xl font-black tracking-tight mt-1.5 capitalize">Wypatrywanie...</h2>
+                                <div id="wild-types" class="flex items-center gap-1.5 mt-2"></div>
+                            </div>
+
+                            <div class="text-right">
+                                <div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Siła (CP)</div>
+                                <div id="wild-cp" class="text-xl sm:text-2xl font-black text-sky-300 tabular-nums">—</div>
+                                <div id="wild-income" class="text-xs font-bold text-emerald-400 mt-0.5">+0/s</div>
+                            </div>
+                        </div>
+
+                        <!-- Środek: Grafika Pokémona + Animacja Pokéballa -->
+                        <div class="relative z-10 my-4 flex items-center justify-center h-52 sm:h-60">
+                            <div id="wild-sparkles" class="hidden absolute inset-0 pointer-events-none">
+                                <i class="fa-solid fa-star text-amber-300 text-xl absolute top-4 left-1/4 shiny-sparkle"></i>
+                                <i class="fa-solid fa-star text-yellow-200 text-sm absolute top-12 right-1/4 shiny-sparkle" style="animation-delay:0.5s"></i>
+                                <i class="fa-solid fa-star text-amber-400 text-lg absolute bottom-8 left-1/3 shiny-sparkle" style="animation-delay:1s"></i>
+                            </div>
+
+                            <!-- Obrazek Pokémona (natychmiastowe ładowanie, bez crossorigin) -->
+                            <img id="wild-img" src="" alt="Dziki Pokémon" referrerpolicy="no-referrer" class="w-44 h-44 sm:w-56 sm:h-56 object-contain drop-shadow-[0_18px_25px_rgba(0,0,0,0.65)] animate-float transition-all duration-300">
+
+                            <!-- Nakładka animacji Pokéballa -->
+                            <div id="catch-ball-overlay" class="hidden absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-20">
+                                <div id="catch-ball-svg" class="w-20 h-20 drop-shadow-[0_10px_25px_rgba(0,0,0,0.7)]"></div>
+                                <div id="catch-status-text" class="mt-3 px-4 py-1 rounded-full bg-black/75 border border-white/15 text-sm font-extrabold tracking-wide text-white"></div>
+                            </div>
+                        </div>
+
+                        <!-- Dolny pasek: Bazowa szansa i przycisk Szukaj -->
+                        <div class="relative z-10 flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-white/10">
+                            <div class="text-xs sm:text-sm text-slate-300">
+                                <span class="text-slate-400">Bazowa szansa:</span>
+                                <span id="wild-base-chance" class="font-extrabold text-white ml-1">—%</span>
+                                <span id="wild-owned-tag" class="ml-2 hidden text-[11px] px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 font-bold">
+                                    <i class="fa-solid fa-check mr-1"></i>W Pokédexie
+                                </span>
+                            </div>
+                            <button id="btn-search-wild" onclick="findWildPokemon()" class="game-btn px-4 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-bold text-sm shadow-lg shadow-sky-500/25 flex items-center gap-2">
+                                <i class="fa-solid fa-magnifying-glass"></i> Szukaj Pokémona
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel Szybkiego Klikania + Wyboru Pokéballi -->
+                <div class="lg:col-span-5 space-y-4">
+                    <!-- Główny Przycisk Szybkiego Klikania: PokèClicker V2.5 -->
+                    <div class="glass rounded-3xl p-4 flex items-center justify-between gap-3 border border-amber-400/35" style="box-shadow: 0 0 24px rgba(251, 191, 36, 0.14);">
+                        <div class="min-w-0">
+                            <div class="text-xs font-extrabold uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
+                                <i class="fa-solid fa-hand-pointer"></i> PokèClicker V2.5
+                            </div>
+                            <p class="text-[11px] text-slate-400 mt-0.5">Klikaj, aby błyskawicznie zarabiać monety!</p>
+                        </div>
+                        <button id="btn-quick-click" onclick="quickClickCoins(event)" class="game-btn shrink-0 px-4 py-3 rounded-2xl bg-gradient-to-r from-amber-400 via-yellow-500 to-orange-500 text-slate-950 font-black text-sm shadow-lg shadow-amber-500/30 flex items-center gap-2">
+                            <i class="fa-solid fa-coins"></i>
+                            <span id="ui-click-reward">+10</span>
+                        </button>
+                    </div>
+
+                    <!-- Rzut Pokéballem -->
+                    <div class="glass rounded-3xl p-5">
+                        <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-300 mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-circle-dot text-rose-400"></i> Rzuć Pokéballa
+                        </h3>
+                        <div id="ball-buttons-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2.5"></div>
+                        <p class="text-[11px] text-slate-400 mt-3 leading-relaxed">
+                            <i class="fa-solid fa-circle-info text-sky-400 mr-1"></i>
+                            Szansa na spotkanie wersji <span class="text-amber-300 font-bold">Shiny</span> wynosi 2% (mnożnik <span class="text-emerald-300 font-bold">x2.5</span> do zarobku i <span class="text-sky-300 font-bold">x1.3</span> do siły).
+                        </p>
+                    </div>
+
+                    <!-- Mini-statystyka -->
+                    <div class="glass rounded-2xl p-4 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center text-emerald-400">
+                                <i class="fa-solid fa-trophy"></i>
+                            </div>
+                            <div>
+                                <div class="text-xs text-slate-400 font-semibold">Złapane łącznie</div>
+                                <div id="hunt-total-caught" class="text-lg font-black text-white tabular-nums">0</div>
+                            </div>
+                        </div>
+                        <button onclick="switchTab('shop')" class="game-btn px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-purple-300">
+                            <i class="fa-solid fa-cart-shopping mr-1"></i> Dokup piłki
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- =====================================================
+             ZAKŁADKA 2: KOLEKCJA (BOX I DRUŻYNA)
+        ===================================================== -->
+        <section id="tab-collection" class="tab-section hidden space-y-5">
+            <!-- Aktywna Drużyna (max 6) -->
+            <div class="glass rounded-3xl p-4 sm:p-5">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                    <div>
+                        <h2 class="text-base sm:text-lg font-black text-white flex items-center gap-2">
+                            <i class="fa-solid fa-shield-halved text-sky-400"></i> Aktywna Drużyna do Walk
+                            <span id="team-count-badge" class="text-xs px-2 py-0.5 rounded-lg bg-sky-500/20 text-sky-300 border border-sky-400/30">0/6</span>
+                        </h2>
+                        <p class="text-xs text-slate-400">Kliknij kartę w drużynie, aby ją zdjąć, lub wybierz Pokémona z Boxa poniżej.</p>
+                    </div>
+                    <div class="px-3.5 py-1.5 rounded-xl bg-indigo-500/15 border border-indigo-400/30 text-sm font-extrabold text-indigo-300">
+                        Łączna Siła: <span id="team-total-cp" class="text-white tabular-nums">0 CP</span>
+                    </div>
+                </div>
+                <div id="active-team-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5"></div>
+            </div>
+
+            <!-- Filtry, Sortowanie i Uwalnianie Duplikatów -->
+            <div class="glass rounded-2xl p-3.5 sm:p-4 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex flex-wrap items-center gap-2">
+                    <select id="col-filter-gen" onchange="renderCollection()" class="bg-slate-900/90 border border-white/15 rounded-xl px-3 py-2 text-xs sm:text-sm font-semibold text-white focus:outline-none focus:border-sky-400">
+                        <option value="all">Wszystkie generacje</option>
+                        <option value="1">Gen 1 (Kanto)</option>
+                        <option value="2">Gen 2 (Johto)</option>
+                        <option value="3">Gen 3 (Hoenn)</option>
+                        <option value="4">Gen 4 (Sinnoh)</option>
+                        <option value="5">Gen 5 (Unova)</option>
+                        <option value="6">Gen 6 (Kalos)</option>
+                        <option value="7">Gen 7 (Alola)</option>
+                        <option value="8">Gen 8 (Galar/Hisui)</option>
+                        <option value="9">Gen 9 (Paldea)</option>
+                    </select>
+
+                    <select id="col-sort" onchange="renderCollection()" class="bg-slate-900/90 border border-white/15 rounded-xl px-3 py-2 text-xs sm:text-sm font-semibold text-white focus:outline-none focus:border-sky-400">
+                        <option value="cp">Sortuj: Siła (CP)</option>
+                        <option value="income">Sortuj: Zarobek (/s)</option>
+                        <option value="rarity">Sortuj: Rzadkość</option>
+                        <option value="id">Sortuj: ID Pokédexa</option>
+                    </select>
+
+                    <label class="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs sm:text-sm font-semibold cursor-pointer">
+                        <input id="col-only-shiny" type="checkbox" onchange="renderCollection()" class="accent-amber-400 w-4 h-4">
+                        <span class="text-amber-300">✨ Tylko Shiny</span>
+                    </label>
+                </div>
+
+                <button onclick="promptReleaseDuplicates()" class="game-btn px-4 py-2 rounded-xl bg-gradient-to-r from-rose-500/80 to-orange-600/80 hover:from-rose-500 hover:to-orange-600 text-white text-xs sm:text-sm font-bold shadow-lg shadow-rose-500/20 flex items-center gap-2">
+                    <i class="fa-solid fa-broom"></i> Uwolnij duplikaty
+                </button>
+            </div>
+
+            <!-- Siatka Kart w Boxie -->
+            <div id="collection-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4"></div>
+        </section>
+
+        <!-- =====================================================
+             ZAKŁADKA 3: WALKI (TRENERZY I ODZNAKI)
+        ===================================================== -->
+        <section id="tab-battle" class="tab-section hidden space-y-5">
+            <!-- Gablota Odznak (SVG) -->
+            <div class="glass rounded-3xl p-4 sm:p-5">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-base sm:text-lg font-black text-white flex items-center gap-2">
+                        <i class="fa-solid fa-award text-amber-400"></i> Gablota Odznak (9 Regionów)
+                    </h2>
+                    <span id="battle-badges-summary" class="text-xs font-bold text-amber-300">0 / 18 zdobytych</span>
+                </div>
+                <div id="badges-showcase" class="flex flex-wrap gap-2"></div>
+            </div>
+
+            <!-- Lista 18 Trenerów -->
+            <div id="trainers-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </section>
+
+        <!-- =====================================================
+             ZAKŁADKA 4: JAJKA (INKUBATOR)
+        ===================================================== -->
+        <section id="tab-eggs" class="tab-section hidden space-y-5">
+            <!-- Sloty Inkubatora (3 sloty) -->
+            <div class="glass rounded-3xl p-4 sm:p-6">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                    <div>
+                        <h2 class="text-lg font-black text-white flex items-center gap-2">
+                            <i class="fa-solid fa-temperature-arrow-up text-emerald-400"></i> Inkubator Jajek
+                        </h2>
+                        <p class="text-xs text-slate-400">Klikaj w wysiadywane jajko, aby przyspieszyć wykluwanie (-2s za kliknięcie)!</p>
+                    </div>
+                    <span id="egg-slots-count" class="text-xs font-bold px-3 py-1 rounded-xl bg-emerald-500/15 text-emerald-300 border border-emerald-400/30">0 / 3 slotów</span>
+                </div>
+                <div id="incubator-slots" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></div>
+            </div>
+
+            <!-- Sklep z Jajkami (Inline SVG) -->
+            <div class="glass rounded-3xl p-4 sm:p-6">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <h3 class="text-base sm:text-lg font-black text-white flex items-center gap-2">
+                        <i class="fa-solid fa-egg text-amber-300"></i> Kup Jajko z Regionu
+                    </h3>
+                    <select id="egg-region-select" class="bg-slate-900/90 border border-white/15 rounded-xl px-3.5 py-2 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-emerald-400"></select>
+                </div>
+
+                <div id="egg-shop-cards" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+            </div>
+        </section>
+
+        <!-- =====================================================
+             ZAKŁADKA 5: SKLEP, ULEPSZENIA, REGIONY I KODY
+        ===================================================== -->
+        <section id="tab-shop" class="tab-section hidden space-y-5">
+            <!-- Sklep z Pokéballami -->
+            <div class="glass rounded-3xl p-4 sm:p-6">
+                <h2 class="text-lg font-black text-white mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-bag-shopping text-rose-400"></i> Poké Mart — Piłki
+                </h2>
+                <div id="shop-balls-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+            </div>
+
+            <!-- Ulepszenia Zarobku, Klikania i Kody Promocyjne -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                <!-- Mnożnik Zarobku Pasywnego -->
+                <div class="glass rounded-3xl p-5 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-base font-black text-white flex items-center gap-2">
+                                <i class="fa-solid fa-chart-line text-emerald-400"></i> Mnożnik Zarobku
+                            </h3>
+                            <span id="upgrade-lvl-badge" class="text-xs font-extrabold px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300">Poz. 1</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-2">
+                            Zwiększa pasywny zarobek ze wszystkich Pokémonów o <span class="text-emerald-300 font-bold">+25%</span> za poziom.
+                        </p>
+                        <div class="mt-3 p-3 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between text-sm">
+                            <span class="text-slate-300">Mnożnik:</span>
+                            <span id="upgrade-current-mult" class="font-black text-emerald-400 text-base">x1.00</span>
+                        </div>
+                    </div>
+                    <button onclick="buyIncomeUpgrade()" class="game-btn mt-4 w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-slate-950 font-black text-sm shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-arrow-up-right-dots"></i> Ulepsz (<span id="upgrade-cost">500</span>)
+                    </button>
+                </div>
+
+                <!-- Ulepszenie Mocy Klikania -->
+                <div class="glass rounded-3xl p-5 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-base font-black text-white flex items-center gap-2">
+                                <i class="fa-solid fa-hand-pointer text-amber-400"></i> Moc Klikania
+                            </h3>
+                            <span id="click-lvl-badge" class="text-xs font-extrabold px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300">Poz. 1</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-2">
+                            Wzmacnia przycisk <span class="text-amber-300 font-bold">PokèClicker V2.5</span> (+15 bazowych monet i +5% pasywnego dochodu na klik).
+                        </p>
+                        <div class="mt-3 p-3 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between text-sm">
+                            <span class="text-slate-300">Za kliknięcie:</span>
+                            <span id="click-current-val" class="font-black text-amber-300 text-base">+10</span>
+                        </div>
+                    </div>
+                    <button onclick="buyClickUpgrade()" class="game-btn mt-4 w-full py-3 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 font-black text-sm shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-bolt"></i> Ulepsz (<span id="click-upgrade-cost">300</span>)
+                    </button>
+                </div>
+
+                <!-- Kody Promocyjne -->
+                <div class="glass rounded-3xl p-5 flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-base font-black text-white flex items-center gap-2">
+                            <i class="fa-solid fa-ticket text-purple-400"></i> Kody Promocyjne
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-2">
+                            Wpisz kod, aby odebrać darmowe monety i rzadkie Pokéballe.
+                        </p>
+                        <div class="mt-3 flex gap-2">
+                            <input id="promo-code-input" type="text" placeholder="np. START2026" class="flex-1 min-w-0 bg-slate-900/90 border border-white/15 rounded-xl px-3.5 py-2.5 text-sm font-bold text-white uppercase placeholder:normal-case placeholder:text-slate-500 focus:outline-none focus:border-purple-400">
+                            <button onclick="redeemPromoCode()" class="game-btn px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold text-sm shadow-lg shadow-purple-500/25 shrink-0">
+                                Odbierz
+                            </button>
+                        </div>
+                    </div>
+                    <div id="redeemed-codes-info" class="mt-3 text-[11px] text-slate-400"></div>
+                </div>
+            </div>
+
+            <!-- Szybki zakup Jajek w Sklepie -->
+            <div class="glass rounded-3xl p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12" id="shop-egg-preview-svg"></div>
+                    <div>
+                        <h3 class="font-black text-white text-sm sm:text-base">Szukasz Jajek Pokémon?</h3>
+                        <p class="text-xs text-slate-400">Kupuj Zwykłe, Rzadkie i Legendarne jajka z wybranego regionu w Inkubatorze.</p>
+                    </div>
+                </div>
+                <button onclick="switchTab('eggs')" class="game-btn px-4 py-2.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-300 font-bold text-xs sm:text-sm">
+                    <i class="fa-solid fa-egg mr-1.5"></i> Przejdź do Inkubatora
+                </button>
+            </div>
+
+            <!-- Odblokowywanie Regionów (9 Generacji) -->
+            <div class="glass rounded-3xl p-4 sm:p-6">
+                <h2 class="text-lg font-black text-white mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-earth-americas text-sky-400"></i> Odblokuj Regiony (Generacje 1–9)
+                </h2>
+                <div id="shop-regions-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5"></div>
+            </div>
+        </section>
+
+        <!-- =====================================================
+             ZAKŁADKA 6: POKÉDEX (1025 POKÉMONÓW + WYSZUKIWARKA)
+        ===================================================== -->
+        <section id="tab-pokedex" class="tab-section hidden space-y-5">
+            <div class="glass rounded-3xl p-4 sm:p-5 space-y-3">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h2 class="text-lg font-black text-white flex items-center gap-2">
+                            <i class="fa-solid fa-book-atlas text-cyan-400"></i> Narodowy Pokédex
+                        </h2>
+                        <p class="text-xs text-slate-400">Odkryj wszystkie 1025 gatunków z 9 generacji. Kliknij odkrytego Pokémona, aby zobaczyć szczegóły.</p>
+                    </div>
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <div class="relative flex-1 sm:w-60">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                            <input id="pokedex-search" type="text" oninput="renderPokedex()" placeholder="Szukaj ID lub nazwy..." class="w-full bg-slate-900/90 border border-white/15 rounded-xl pl-8 pr-3 py-2 text-xs sm:text-sm font-semibold text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-400">
+                        </div>
+                        <div id="pokedex-gen-progress" class="text-xs sm:text-sm font-extrabold text-cyan-300 shrink-0">0 / 151</div>
+                    </div>
+                </div>
+
+                <!-- Filtry Generacji 1–9 -->
+                <div id="pokedex-gen-tabs" class="flex flex-wrap gap-1.5"></div>
+            </div>
+
+            <!-- Siatka wpisów Pokédexa -->
+            <div id="pokedex-grid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2.5 sm:gap-3"></div>
+        </section>
+
+    </main>
+
+    <!-- =========================================================
+         MODAL ARENY WALKI TUROWEJ
+    ========================================================= -->
+    <div id="battle-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+        <div class="glass-strong rounded-3xl w-full max-w-4xl border border-white/15 overflow-hidden my-auto">
+            <div class="px-5 py-3.5 bg-gradient-to-r from-rose-600/30 via-indigo-600/30 to-sky-600/30 border-b border-white/10 flex items-center justify-between">
+                <div>
+                    <span id="arena-region-tag" class="text-[10px] font-extrabold uppercase tracking-widest text-sky-300">REGION</span>
+                    <h3 id="arena-trainer-name" class="text-base sm:text-lg font-black text-white">Walka z Liderem</h3>
+                </div>
+                <button onclick="fleeBattle()" class="game-btn px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/35 border border-rose-400/30 text-rose-200 text-xs font-bold">
+                    <i class="fa-solid fa-flag mr-1"></i> Ucieknij
+                </button>
+            </div>
+
+            <div class="p-4 sm:p-6 bg-gradient-to-b from-slate-900/70 to-slate-950/90">
+                <div class="grid grid-cols-2 gap-4 sm:gap-8 items-center">
+                    <!-- Strona Gracza -->
+                    <div class="glass rounded-2xl p-3 sm:p-4 relative">
+                        <div class="flex items-center justify-between text-xs mb-1">
+                            <span id="battle-p-name" class="font-extrabold text-white capitalize truncate">Gracz</span>
+                            <span id="battle-p-hp-text" class="font-bold text-emerald-300 tabular-nums">100/100</span>
+                        </div>
+                        <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden mb-2">
+                            <div id="battle-p-hp-bar" class="hp-bar-fill h-full bg-emerald-400 rounded-full" style="width:100%"></div>
+                        </div>
+                        <div id="battle-p-types" class="flex gap-1 mb-2"></div>
+                        <div class="h-32 sm:h-40 flex items-center justify-center">
+                            <img id="battle-p-img" src="" alt="Twój Pokémon" referrerpolicy="no-referrer" class="w-28 h-28 sm:w-36 sm:h-36 object-contain drop-shadow-[0_12px_18px_rgba(0,0,0,0.6)]">
+                        </div>
+                        <div class="mt-2">
+                            <div class="flex justify-between text-[10px] font-bold text-amber-300 mb-0.5">
+                                <span>SUPER ATAK</span>
+                                <span id="battle-energy-text">0%</span>
+                            </div>
+                            <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                                <div id="battle-energy-bar" class="hp-bar-fill h-full bg-gradient-to-r from-amber-400 to-orange-500" style="width:0%"></div>
+                            </div>
+                        </div>
+                        <div id="battle-p-dots" class="flex gap-1.5 justify-center mt-2.5"></div>
+                    </div>
+
+                    <!-- Strona Przeciwnika -->
+                    <div class="glass rounded-2xl p-3 sm:p-4 relative">
+                        <div class="flex items-center justify-between text-xs mb-1">
+                            <span id="battle-e-name" class="font-extrabold text-rose-200 capitalize truncate">Wróg</span>
+                            <span id="battle-e-hp-text" class="font-bold text-rose-300 tabular-nums">100/100</span>
+                        </div>
+                        <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden mb-2">
+                            <div id="battle-e-hp-bar" class="hp-bar-fill h-full bg-rose-500 rounded-full" style="width:100%"></div>
+                        </div>
+                        <div id="battle-e-types" class="flex gap-1 mb-2"></div>
+                        <div class="h-32 sm:h-40 flex items-center justify-center">
+                            <img id="battle-e-img" src="" alt="Pokémon Przeciwnika" referrerpolicy="no-referrer" class="w-28 h-28 sm:w-36 sm:h-36 object-contain drop-shadow-[0_12px_18px_rgba(0,0,0,0.6)]">
+                        </div>
+                        <div class="mt-2 text-center text-[11px] font-bold text-slate-400" id="battle-e-cp">CP: —</div>
+                        <div id="battle-e-dots" class="flex gap-1.5 justify-center mt-2.5"></div>
+                    </div>
+                </div>
+
+                <!-- Log Walki -->
+                <div id="battle-log" class="mt-4 h-24 overflow-y-auto rounded-2xl bg-black/50 border border-white/10 p-3 text-xs space-y-1 font-medium text-slate-300"></div>
+
+                <!-- Przyciski Akcji -->
+                <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                    <button id="btn-atk-normal" onclick="battleAction('normal')" class="game-btn py-3 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-sky-500/20">
+                        <i class="fa-solid fa-burst mr-1"></i> Atak
+                    </button>
+                    <button id="btn-atk-super" onclick="battleAction('super')" disabled class="game-btn py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-amber-500/20">
+                        <i class="fa-solid fa-fire-flame-curved mr-1"></i> Super Atak
+                    </button>
+                    <button id="btn-atk-switch" onclick="battleSwitchNext()" class="game-btn py-3 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white font-bold text-xs sm:text-sm">
+                        <i class="fa-solid fa-arrows-rotate mr-1"></i> Zmień
+                    </button>
+                    <button id="btn-atk-auto" onclick="toggleAutoBattle()" class="game-btn py-3 rounded-xl bg-purple-500/25 hover:bg-purple-500/40 border border-purple-400/40 text-purple-200 font-bold text-xs sm:text-sm">
+                        <i class="fa-solid fa-robot mr-1"></i> Auto: WYŁ
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================
+         MODAL EKSPORTU / IMPORTU ZAPISU (BASE64)
+    ========================================================= -->
+    <div id="save-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="glass-strong rounded-3xl w-full max-w-lg p-5 sm:p-6 border border-white/15">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-black text-white flex items-center gap-2">
+                    <i class="fa-solid fa-database text-sky-400"></i> Zapis Gry — PokèClicker V2.5 (Base64)
+                </h3>
+                <button onclick="closeSaveModal()" class="text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p class="text-xs text-slate-400 mb-3">Skopiuj poniższy kod, aby przenieść postęp na inne urządzenie, lub wklej kod i kliknij „Importuj”.</p>
+            <textarea id="save-base64-text" rows="5" class="w-full bg-slate-950/90 border border-white/15 rounded-2xl p-3 text-xs font-mono text-sky-200 focus:outline-none focus:border-sky-400 break-all"></textarea>
+            <div class="grid grid-cols-2 gap-2.5 mt-4">
+                <button onclick="copySaveCode()" class="game-btn py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-black text-sm">
+                    <i class="fa-regular fa-copy mr-1"></i> Kopiuj kod
+                </button>
+                <button onclick="importSaveCode()" class="game-btn py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-sm">
+                    <i class="fa-solid fa-file-import mr-1"></i> Importuj
+                </button>
+            </div>
+            <div class="mt-4 pt-3 border-t border-white/10 flex justify-between items-center">
+                <span class="text-[11px] text-slate-500">Auto-zapis działa w tle co 5s</span>
+                <button onclick="promptResetGame()" class="text-xs text-rose-400 hover:text-rose-300 font-bold underline">Resetuj postęp</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================
+         MODAL UNIWERSALNY (POTWIERDZENIA / SZCZEGÓŁY / WYKLUCIE)
+    ========================================================= -->
+    <div id="custom-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="glass-strong rounded-3xl w-full max-w-md p-6 border border-white/15 text-center">
+            <div id="custom-modal-content"></div>
+            <div id="custom-modal-actions" class="mt-5 flex justify-center gap-2.5"></div>
+        </div>
+    </div>
+
+    <!-- =========================================================
+         KONTENER POWIADOMIEŃ (TOASTY)
+    ========================================================= -->
+    <div id="toast-container" class="fixed top-16 right-3 sm:right-5 z-50 flex flex-col gap-2 max-w-xs sm:max-w-sm pointer-events-none"></div>
+
+    <!-- =========================================================
+         LOGIKA GRY (JAVASCRIPT)
+    ========================================================= -->
+    <script>
+        /* =========================================================
+           1. KONFIGURACJA REGIONÓW, TYPÓW, PIŁEK, TRENERÓW I FALLBACKÓW
+        ========================================================= */
+        const SAVE_KEY = 'pokeverse_9g_save_v1';
+        const CACHE_KEY = 'pokeverse_9g_api_cache_v2';
+
+        const REGIONS = [
+            { gen: 1, name: 'Kanto',       min: 1,   max: 151,  cost: 0,      color: '#ef4444', elites: [6,9,3,130,143,149,144,145,146,150,151,59,65,94,131] },
+            { gen: 2, name: 'Johto',       min: 152, max: 251,  cost: 1500,   color: '#f59e0b', elites: [154,157,160,196,197,212,248,243,244,245,249,250,251,230] },
+            { gen: 3, name: 'Hoenn',       min: 252, max: 386,  cost: 4000,   color: '#10b981', elites: [254,257,260,282,306,330,350,373,376,380,381,382,383,384,385,386] },
+            { gen: 4, name: 'Sinnoh',      min: 387, max: 493,  cost: 8000,   color: '#3b82f6', elites: [389,392,395,445,448,462,466,467,468,483,484,487,491,493] },
+            { gen: 5, name: 'Unova',       min: 494, max: 649,  cost: 15000,  color: '#8b5cf6', elites: [497,500,503,530,553,571,609,612,635,637,643,644,646,649] },
+            { gen: 6, name: 'Kalos',       min: 650, max: 721,  cost: 25000,  color: '#ec4899', elites: [652,655,658,663,681,697,700,706,715,716,717,718,719,721] },
+            { gen: 7, name: 'Alola',       min: 722, max: 809,  cost: 40000,  color: '#f97316', elites: [724,727,730,745,768,778,784,785,786,791,792,800,802,807] },
+            { gen: 8, name: 'Galar/Hisui', min: 810, max: 905,  cost: 60000,  color: '#06b6d4', elites: [812,815,818,823,849,887,888,889,890,892,898,900,901,905] },
+            { gen: 9, name: 'Paldea',      min: 906, max: 1025, cost: 100000, color: '#a855f7', elites: [908,911,914,937,959,979,983,998,1000,1007,1008,1017,1024] }
+        ];
+
+        const TYPE_KEYS = ['normal','fire','water','grass','electric','ice','fighting','poison','ground','flying','psychic','bug','rock','ghost','dragon','dark','steel','fairy'];
+
+        const TYPE_META = {
+            normal:   { pl: 'Normalny',    color: '#94a3b8' },
+            fire:     { pl: 'Ogień',       color: '#f97316' },
+            water:    { pl: 'Woda',        color: '#38bdf8' },
+            grass:    { pl: 'Trawa',       color: '#22c55e' },
+            electric: { pl: 'Elektryczny', color: '#facc15' },
+            ice:      { pl: 'Lód',         color: '#67e8f9' },
+            fighting: { pl: 'Walczący',    color: '#ef4444' },
+            poison:   { pl: 'Trujący',     color: '#a855f7' },
+            ground:   { pl: 'Ziemia',      color: '#d97706' },
+            flying:   { pl: 'Latający',    color: '#818cf8' },
+            psychic:  { pl: 'Psychiczny',  color: '#ec4899' },
+            bug:      { pl: 'Robak',       color: '#84cc16' },
+            rock:     { pl: 'Skała',       color: '#b45309' },
+            ghost:    { pl: 'Duch',        color: '#7c3aed' },
+            dragon:   { pl: 'Smok',        color: '#6366f1' },
+            dark:     { pl: 'Mrok',        color: '#475569' },
+            steel:    { pl: 'Stal',        color: '#cbd5e1' },
+            fairy:    { pl: 'Baśniowy',    color: '#f472b6' }
+        };
+
+        const TYPE_ADVANTAGE = {
+            fire: ['grass', 'ice', 'bug', 'steel'],
+            water: ['fire', 'ground', 'rock'],
+            grass: ['water', 'ground', 'rock'],
+            electric: ['water', 'flying'],
+            ice: ['grass', 'ground', 'flying', 'dragon'],
+            fighting: ['normal', 'ice', 'rock', 'dark', 'steel'],
+            poison: ['grass', 'fairy'],
+            ground: ['fire', 'electric', 'poison', 'rock', 'steel'],
+            flying: ['grass', 'fighting', 'bug'],
+            psychic: ['fighting', 'poison'],
+            bug: ['grass', 'psychic', 'dark'],
+            rock: ['fire', 'ice', 'flying', 'bug'],
+            ghost: ['psychic', 'ghost'],
+            dragon: ['dragon'],
+            dark: ['psychic', 'ghost'],
+            steel: ['ice', 'rock', 'fairy'],
+            fairy: ['fighting', 'dragon', 'dark']
+        };
+
+        // Lokalny słownik popularnych Pokémonów, starterów, liderów i legend (Gen 1-9) do natychmiastowego fallbacku
+        const LOCAL_POKE_DICT = {
+            1:['bulbasaur',['grass','poison'],318], 2:['ivysaur',['grass','poison'],405], 3:['venusaur',['grass','poison'],525],
+            4:['charmander',['fire'],309], 5:['charmeleon',['fire'],405], 6:['charizard',['fire','flying'],534],
+            7:['squirtle',['water'],314], 8:['wartortle',['water'],405], 9:['blastoise',['water'],530],
+            18:['pidgeot',['normal','flying'],479], 25:['pikachu',['electric'],320], 26:['raichu',['electric'],485],
+            59:['arcanine',['fire'],555], 65:['alakazam',['psychic'],500], 74:['geodude',['rock','ground'],300],
+            94:['gengar',['ghost','poison'],500], 95:['onix',['rock','ground'],385], 130:['gyarados',['water','flying'],540],
+            131:['lapras',['water','ice'],535], 133:['eevee',['normal'],325], 143:['snorlax',['normal'],540],
+            144:['articuno',['ice','flying'],580], 145:['zapdos',['electric','flying'],580], 146:['moltres',['fire','flying'],580],
+            149:['dragonite',['dragon','flying'],600], 150:['mewtwo',['psychic'],680], 151:['mew',['psychic'],600],
+            152:['chikorita',['grass'],318], 154:['meganium',['grass'],525], 155:['cyndaquil',['fire'],309],
+            157:['typhlosion',['fire'],534], 158:['totodile',['water'],314], 160:['feraligatr',['water'],530],
+            173:['cleffa',['fairy'],218], 196:['espeon',['psychic'],525], 197:['umbreon',['dark'],525],
+            212:['scizor',['bug','steel'],500], 218:['slugma',['fire'],250], 241:['miltank',['normal'],490],
+            243:['raikou',['electric'],580], 244:['entei',['fire'],580], 245:['suicune',['water'],580],
+            248:['tyranitar',['rock','dark'],600], 249:['lugia',['psychic','flying'],680], 250:['ho-oh',['fire','flying'],680],
+            251:['celebi',['psychic','grass'],600], 252:['treecko',['grass'],310], 254:['sceptile',['grass'],530],
+            255:['torchic',['fire'],310], 257:['blaziken',['fire','fighting'],530], 258:['mudkip',['water'],310],
+            260:['swampert',['water','ground'],535], 282:['gardevoir',['psychic','fairy'],518], 306:['aggron',['steel','rock'],530],
+            324:['torkoal',['fire'],470], 350:['milotic',['water'],540], 373:['salamence',['dragon','flying'],600],
+            376:['metagross',['steel','psychic'],600], 382:['kyogre',['water'],670], 383:['groudon',['ground'],670],
+            384:['rayquaza',['dragon','flying'],680], 387:['turtwig',['grass'],318], 389:['torterra',['grass','ground'],525],
+            390:['chimchar',['fire'],309], 392:['infernape',['fire','fighting'],534], 393:['piplup',['water'],314],
+            395:['empoleon',['water','steel'],530], 405:['luxray',['electric'],523], 445:['garchomp',['dragon','ground'],600],
+            448:['lucario',['fighting','steel'],525], 466:['electivire',['electric'],540], 483:['dialga',['steel','dragon'],680],
+            484:['palkia',['water','dragon'],680], 487:['giratina',['ghost','dragon'],680], 493:['arceus',['normal'],720],
+            495:['snivy',['grass'],308], 497:['serperior',['grass'],528], 498:['tepig',['fire'],308],
+            500:['emboar',['fire','fighting'],528], 501:['oshawott',['water'],308], 503:['samurott',['water'],528],
+            523:['zebstrika',['electric'],497], 571:['zoroark',['dark'],510], 587:['emolga',['electric','flying'],428],
+            643:['reshiram',['dragon','fire'],680], 644:['zekrom',['dragon','electric'],680], 646:['kyurem',['dragon','ice'],660],
+            650:['chespin',['grass'],313], 652:['chesnaught',['grass','fighting'],530], 653:['fennekin',['fire'],307],
+            655:['delphox',['fire','psychic'],534], 656:['froakie',['water'],314], 658:['greninja',['water','dark'],530],
+            701:['hawlucha',['fighting','flying'],500], 706:['goodra',['dragon'],600], 716:['xerneas',['fairy'],680],
+            717:['yveltal',['dark','flying'],680], 722:['rowlet',['grass','flying'],320], 724:['decidueye',['grass','ghost'],530],
+            725:['litten',['fire'],320], 727:['incineroar',['fire','dark'],530], 728:['popplio',['water'],320],
+            730:['primarina',['water','fairy'],530], 745:['lycanroc',['rock'],487], 768:['golisopod',['bug','water'],530],
+            784:['kommo-o',['dragon','fighting'],600], 791:['solgaleo',['psychic','steel'],680], 792:['lunala',['psychic','ghost'],680],
+            810:['grookey',['grass'],310], 812:['rillaboom',['grass'],530], 813:['scorbunny',['fire'],310],
+            815:['cinderace',['fire'],530], 816:['sobble',['water'],310], 818:['inteleon',['water'],530],
+            884:['duraludon',['steel','dragon'],535], 887:['dragapult',['dragon','ghost'],600], 888:['zacian',['fairy','steel'],670],
+            889:['zamazenta',['fighting','steel'],670], 890:['eternatus',['poison','dragon'],690],
+            906:['sprigatito',['grass'],310], 908:['meowscarada',['grass','dark'],530], 909:['fuecoco',['fire'],310],
+            911:['skeledirge',['fire','ghost'],530], 912:['quaxly',['water'],310], 914:['quaquaval',['water','fighting'],530],
+            939:['bellibolt',['electric'],495], 959:['tinkaton',['fairy','steel'],506], 998:['baxcalibur',['dragon','ice'],600],
+            1007:['koraidon',['fighting','dragon'],670], 1008:['miraidon',['electric','dragon'],670], 1024:['terapagos',['normal'],600]
+        };
+
+        const BALLS = {
+            poke:   { id: 'poke',   name: 'Pokéball',    bonus: 0,   price: 50,   top: '#ef4444', ring: '#ffffff', desc: 'Bazowa szansa złapania' },
+            great:  { id: 'great',  name: 'Great Ball',  bonus: 20,  price: 150,  top: '#3b82f6', ring: '#ef4444', desc: '+20% do szansy złapania' },
+            ultra:  { id: 'ultra',  name: 'Ultra Ball',  bonus: 40,  price: 400,  top: '#1e293b', ring: '#facc15', desc: '+40% do szansy złapania' },
+            master: { id: 'master', name: 'Master Ball', bonus: 100, price: 5000, top: '#9333ea', ring: '#f472b6', desc: '100% gwarancji złapania!' }
+        };
+
+        const PROMO_CODES = {
+            'START2026':  { coins: 1000, balls: { poke: 10, great: 3 },  desc: '+1000 monet, 10x Pokéball, 3x Great Ball' },
+            'START2137':  { coins: 2137, balls: { ultra: 5 },            desc: '+2137 monet, 5x Ultra Ball' },
+            'BARTUS2115': { coins: 2500, balls: { master: 1, ultra: 5 }, desc: '+2500 monet, 1x Master Ball, 5x Ultra Ball' }
+        };
+
+        // 18 Liderów (po 2 na każdy z 9 regionów) z unikalnymi kolorami i kształtami SVG odznak
+        const TRAINERS = [
+            { id: 't1',  gen: 1, name: 'Lider Brock',      badge: 'Odznaka Głazu',   shape: 'octagon', color: '#94a3b8', accent: '#cbd5e1', scale: 0.8,  team: [74, 95],         rewardCoins: 450,    rewardBall: { type: 'great', qty: 2 } },
+            { id: 't2',  gen: 1, name: 'Mistrz Blue',      badge: 'Odznaka Kanto',   shape: 'flame',   color: '#ef4444', accent: '#fbbf24', scale: 1.1,  team: [18, 65, 6],      rewardCoins: 1100,   rewardBall: { type: 'ultra', qty: 2 } },
+            { id: 't3',  gen: 2, name: 'Liderka Whitney',  badge: 'Odznaka Równiny', shape: 'star',    color: '#f472b6', accent: '#fde047', scale: 1.25, team: [173, 241],       rewardCoins: 1600,   rewardBall: { type: 'great', qty: 4 } },
+            { id: 't4',  gen: 2, name: 'Mistrz Lance',     badge: 'Odznaka Smoka',   shape: 'shield',  color: '#6366f1', accent: '#38bdf8', scale: 1.5,  team: [130, 149, 248],  rewardCoins: 2800,   rewardBall: { type: 'ultra', qty: 3 } },
+            { id: 't5',  gen: 3, name: 'Liderka Flannery', badge: 'Odznaka Żaru',    shape: 'flame',   color: '#f97316', accent: '#fef08a', scale: 1.7,  team: [218, 324],       rewardCoins: 3500,   rewardBall: { type: 'ultra', qty: 3 } },
+            { id: 't6',  gen: 3, name: 'Mistrz Steven',    badge: 'Odznaka Metalu',  shape: 'diamond', color: '#38bdf8', accent: '#e2e8f0', scale: 2.0,  team: [306, 376, 384],  rewardCoins: 5500,   rewardBall: { type: 'ultra', qty: 5 } },
+            { id: 't7',  gen: 4, name: 'Lider Volkner',    badge: 'Odznaka Latarni', shape: 'bolt',    color: '#eab308', accent: '#fef9c3', scale: 2.2,  team: [405, 466],       rewardCoins: 6800,   rewardBall: { type: 'ultra', qty: 5 } },
+            { id: 't8',  gen: 4, name: 'Mistrzyni Cynthia',badge: 'Odznaka Sinnoh',  shape: 'crown',   color: '#a855f7', accent: '#facc15', scale: 2.6,  team: [448, 350, 445],  rewardCoins: 10000,  rewardBall: { type: 'master', qty: 1 } },
+            { id: 't9',  gen: 5, name: 'Liderka Elesa',    badge: 'Odznaka Wolta',   shape: 'bolt',    color: '#facc15', accent: '#38bdf8', scale: 2.9,  team: [587, 523],       rewardCoins: 12000,  rewardBall: { type: 'ultra', qty: 6 } },
+            { id: 't10', gen: 5, name: 'Trener N',         badge: 'Odznaka Prawdy',  shape: 'diamond', color: '#10b981', accent: '#ffffff', scale: 3.3,  team: [571, 643, 644],  rewardCoins: 17000,  rewardBall: { type: 'master', qty: 1 } },
+            { id: 't11', gen: 6, name: 'Liderka Korrina',  badge: 'Odznaka Walki',   shape: 'octagon', color: '#e11d48', accent: '#fda4af', scale: 3.6,  team: [701, 448],       rewardCoins: 20000,  rewardBall: { type: 'ultra', qty: 8 } },
+            { id: 't12', gen: 6, name: 'Mistrzyni Diantha',badge: 'Odznaka Kalos',   shape: 'star',    color: '#ec4899', accent: '#fbcfe8', scale: 4.1,  team: [658, 706, 282],  rewardCoins: 28000,  rewardBall: { type: 'master', qty: 1 } },
+            { id: 't13', gen: 7, name: 'Kahuna Olivia',    badge: 'Kryształ Skały',  shape: 'diamond', color: '#d97706', accent: '#fde68a', scale: 4.5,  team: [745, 768],       rewardCoins: 33000,  rewardBall: { type: 'ultra', qty: 10 } },
+            { id: 't14', gen: 7, name: 'Profesor Kukui',   badge: 'Odznaka Aloli',   shape: 'star',    color: '#fb923c', accent: '#fef08a', scale: 5.0,  team: [727, 784, 791],  rewardCoins: 45000,  rewardBall: { type: 'master', qty: 1 } },
+            { id: 't15', gen: 8, name: 'Lider Raihan',     badge: 'Odznaka Burzy',   shape: 'shield',  color: '#06b6d4', accent: '#a5f3fc', scale: 5.5,  team: [884, 887],       rewardCoins: 55000,  rewardBall: { type: 'ultra', qty: 12 } },
+            { id: 't16', gen: 8, name: 'Mistrz Leon',      badge: 'Korona Galaru',   shape: 'crown',   color: '#ef4444', accent: '#fde047', scale: 6.2,  team: [815, 888, 6],    rewardCoins: 75000,  rewardBall: { type: 'master', qty: 2 } },
+            { id: 't17', gen: 9, name: 'Liderka Iono',     badge: 'Odznaka Streamu', shape: 'bolt',    color: '#22d3ee', accent: '#f472b6', scale: 6.8,  team: [939, 959],       rewardCoins: 90000,  rewardBall: { type: 'ultra', qty: 15 } },
+            { id: 't18', gen: 9, name: 'Mistrzyni Nemona', badge: 'Korona Paldei',   shape: 'crown',   color: '#c084fc', accent: '#fde047', scale: 7.8,  team: [908, 998, 1007], rewardCoins: 140000, rewardBall: { type: 'master', qty: 3 } }
+        ];
+
+        /* =========================================================
+           2. STAN GRY I PAMIĘĆ PODRĘCZNA API
+        ========================================================= */
+        let apiCache = {};
+        let state = getDefaultState();
+        let currentWild = null;
+        let isCatching = false;
+        let activeTab = 'hunt';
+        let activePokedexGen = 1;
+        let soundEnabled = true;
+
+        let battle = null;
+        let autoBattleInterval = null;
+
+        function getDefaultState() {
+            return {
+                coins: 300,
+                balls: { poke: 10, great: 2, ultra: 0, master: 0 },
+                unlockedRegions: [1],
+                selectedRegion: 1,
+                collection: [],
+                team: [],
+                pokedex: {},
+                badges: [],
+                eggs: [],
+                incomeUpgradeLvl: 1,
+                clickUpgradeLvl: 1,
+                usedCodes: [],
+                totalCaught: 0,
+                sound: true
+            };
+        }
+
+        /* =========================================================
+           3. GRAFIKI INLINE SVG (POKEBALLE, JAJKA, ODZNAKI, FALLBACK)
+        ========================================================= */
+        function getPokeballSvg(ballId) {
+            const b = BALLS[ballId] || BALLS.poke;
+            const extraDetail = ballId === 'master'
+                ? `<text x="50" y="34" text-anchor="middle" fill="#f472b6" font-size="18" font-weight="900" font-family="Inter,sans-serif">M</text>`
+                : ballId === 'great'
+                ? `<path d="M18,28 L34,38 M82,28 L66,38" stroke="#ef4444" stroke-width="6" stroke-linecap="round"/>`
+                : ballId === 'ultra'
+                ? `<path d="M34,12 L34,42 M66,12 L66,42" stroke="#facc15" stroke-width="6" stroke-linecap="round"/>`
+                : '';
+
+            return `
+                <svg viewBox="0 0 100 100" class="w-full h-full drop-shadow">
+                    <defs>
+                        <radialGradient id="shine-${ballId}" cx="35%" cy="30%" r="60%">
+                            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.35"/>
+                            <stop offset="100%" stop-color="#000000" stop-opacity="0.15"/>
+                        </radialGradient>
+                    </defs>
+                    <path d="M6,50 A44,44 0 0,1 94,50 Z" fill="${b.top}" stroke="#0f172a" stroke-width="5"/>
+                    <path d="M6,50 A44,44 0 0,0 94,50 Z" fill="#f8fafc" stroke="#0f172a" stroke-width="5"/>
+                    ${extraDetail}
+                    <circle cx="50" cy="50" r="44" fill="url(#shine-${ballId})"/>
+                    <line x1="6" y1="50" x2="94" y2="50" stroke="#0f172a" stroke-width="7"/>
+                    <circle cx="50" cy="50" r="14" fill="${b.ring}" stroke="#0f172a" stroke-width="5"/>
+                    <circle cx="50" cy="50" r="6" fill="#ffffff"/>
+                </svg>
+            `;
+        }
+
+        function getEggSvg(tier) {
+            const palettes = {
+                common:    { base: '#f8fafc', shade: '#cbd5e1', spot1: '#22c55e', spot2: '#86efac', glow: 'rgba(148,163,184,0.35)' },
+                rare:      { base: '#e0f2fe', shade: '#7dd3fc', spot1: '#0284c7', spot2: '#38bdf8', glow: 'rgba(56,189,248,0.55)' },
+                legendary: { base: '#fef9c3', shade: '#f59e0b', spot1: '#b45309', spot2: '#facc15', glow: 'rgba(251,191,36,0.65)' }
+            };
+            const p = palettes[tier] || palettes.common;
+            return `
+                <svg viewBox="0 0 100 120" class="w-full h-full" style="filter: drop-shadow(0 8px 14px ${p.glow})">
+                    <defs>
+                        <linearGradient id="eggGrad-${tier}" x1="20%" y1="10%" x2="85%" y2="95%">
+                            <stop offset="0%" stop-color="${p.base}"/>
+                            <stop offset="100%" stop-color="${p.shade}"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="M50,8 C74,8 88,48 88,76 C88,101 72,114 50,114 C28,114 12,101 12,76 C12,48 26,8 50,8 Z"
+                          fill="url(#eggGrad-${tier})" stroke="#0f172a" stroke-width="4.5"/>
+                    <ellipse cx="36" cy="55" rx="10" ry="13" transform="rotate(-18 36 55)" fill="${p.spot1}" opacity="0.82"/>
+                    <ellipse cx="66" cy="76" rx="12" ry="9" transform="rotate(20 66 76)" fill="${p.spot1}" opacity="0.78"/>
+                    <circle cx="58" cy="38" r="7" fill="${p.spot2}" opacity="0.9"/>
+                    <circle cx="34" cy="92" r="6" fill="${p.spot2}" opacity="0.85"/>
+                    <path d="M32,26 C36,18 44,15 50,15" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round" fill="none" opacity="0.75"/>
+                </svg>
+            `;
+        }
+
+        function getBadgeSvg(trainer) {
+            const c = trainer.color || '#38bdf8';
+            const a = trainer.accent || '#ffffff';
+            let inner = '';
+            if (trainer.shape === 'octagon') {
+                inner = `<polygon points="30,10 70,10 90,30 90,70 70,90 30,90 10,70 10,30" fill="${c}" stroke="${a}" stroke-width="6"/>
+                         <polygon points="36,24 64,24 76,36 76,64 64,76 36,76 24,64 24,36" fill="${a}" opacity="0.35"/>`;
+            } else if (trainer.shape === 'flame') {
+                inner = `<path d="M50,8 C66,26 84,42 82,66 C80,84 66,94 50,94 C34,94 20,84 18,66 C16,44 34,26 50,8 Z" fill="${c}" stroke="${a}" stroke-width="5"/>
+                         <path d="M50,36 C58,48 66,58 64,72 C62,80 56,84 50,84 C44,84 38,80 36,72 C34,58 42,48 50,36 Z" fill="${a}"/>`;
+            } else if (trainer.shape === 'star') {
+                inner = `<polygon points="50,8 62,36 92,38 69,58 76,88 50,72 24,88 31,58 8,38 38,36" fill="${c}" stroke="${a}" stroke-width="5" stroke-linejoin="round"/>
+                         <circle cx="50" cy="52" r="12" fill="${a}"/>`;
+            } else if (trainer.shape === 'diamond') {
+                inner = `<polygon points="50,8 88,50 50,92 12,50" fill="${c}" stroke="${a}" stroke-width="5" stroke-linejoin="round"/>
+                         <polygon points="50,24 72,50 50,76 28,50" fill="${a}" opacity="0.45"/>`;
+            } else if (trainer.shape === 'bolt') {
+                inner = `<circle cx="50" cy="50" r="42" fill="${c}" stroke="${a}" stroke-width="5"/>
+                         <polygon points="55,16 30,54 49,54 43,84 72,44 52,44" fill="${a}" stroke="#0f172a" stroke-width="2.5" stroke-linejoin="round"/>`;
+            } else if (trainer.shape === 'crown') {
+                inner = `<path d="M14,78 L18,30 L38,50 L50,20 L62,50 L82,30 L86,78 Z" fill="${c}" stroke="${a}" stroke-width="5" stroke-linejoin="round"/>
+                         <rect x="16" y="76" width="68" height="10" rx="4" fill="${a}"/>
+                         <circle cx="50" cy="20" r="6" fill="${a}"/>`;
+            } else {
+                // shield
+                inner = `<path d="M16,18 L50,8 L84,18 L80,58 C78,76 64,88 50,94 C36,88 22,76 20,58 Z" fill="${c}" stroke="${a}" stroke-width="5" stroke-linejoin="round"/>
+                         <path d="M50,24 L66,48 L50,74 L34,48 Z" fill="${a}" opacity="0.6"/>`;
+            }
+            return `<svg viewBox="0 0 100 100" class="w-full h-full drop-shadow">${inner}</svg>`;
+        }
+
+        // Ostateczny fallback offline: data:image/svg+xml z numerem #ID i Pokéballem
+        function getOfflinePokemonSvgDataUri(id, isShiny) {
+            const topColor = isShiny ? '%23facc15' : '%2338bdf8';
+            const glowColor = isShiny ? '%23fde047' : '%23818cf8';
+            const label = `%23${String(id).padStart(4, '0')}`;
+            const star = isShiny ? `<text x="100" y="34" text-anchor="middle" fill="%23fde047" font-size="20" font-weight="900">★ SHINY</text>` : '';
+            const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+                <rect width="200" height="200" rx="28" fill="%230f172a" fill-opacity="0.85"/>
+                <circle cx="100" cy="96" r="56" fill="none" stroke="${glowColor}" stroke-width="4" stroke-opacity="0.45"/>
+                <path d="M52,96 A48,48 0 0,1 148,96 Z" fill="${topColor}" stroke="%23090d16" stroke-width="6"/>
+                <path d="M52,96 A48,48 0 0,0 148,96 Z" fill="%23f1f5f9" stroke="%23090d16" stroke-width="6"/>
+                <line x1="52" y1="96" x2="148" y2="96" stroke="%23090d16" stroke-width="8"/>
+                <circle cx="100" cy="96" r="15" fill="%23ffffff" stroke="%23090d16" stroke-width="6"/>
+                ${star}
+                <text x="100" y="178" text-anchor="middle" fill="%23e2e8f0" font-family="sans-serif" font-size="22" font-weight="800">${label}</text>
+            </svg>`;
+            return `data:image/svg+xml;charset=utf-8,${svg.replace(/\s+/g, ' ').trim()}`;
+        }
+
+        /* =========================================================
+           4. WIELOSTOPNIOWY SYSTEM ŁADOWANIA OBRAZKÓW (5 ŹRÓDEŁ)
+        ========================================================= */
+        function getPokeImgSources(id, isShiny) {
+            const s = isShiny ? 'shiny/' : '';
+            const padded3 = String(id).padStart(3, '0');
+            return [
+                `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/other/official-artwork/${s}${id}.png`,
+                `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${s}${id}.png`,
+                `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/${s}${id}.png`,
+                `https://assets.pokemon.com/assets/cms2/img/pokedex/detail/${padded3}.png`,
+                getOfflinePokemonSvgDataUri(id, isShiny)
+            ];
+        }
+
+        function getArtworkUrl(id, isShiny = false) {
+            return getPokeImgSources(id, isShiny)[0];
+        }
+
+        window.handlePokeImgError = function (img, id, isShiny) {
+            const sources = getPokeImgSources(id, isShiny);
+            const step = parseInt(img.dataset.fallbackStep || '0', 10) + 1;
+            img.dataset.fallbackStep = String(step);
+            if (step < sources.length) {
+                img.src = sources[step];
+            } else {
+                img.onerror = null;
+                img.src = sources[sources.length - 1];
+            }
+        };
+
+        /* =========================================================
+           5. SYNTETYZATOR DŹWIĘKÓW (WEB AUDIO API)
+        ========================================================= */
+        let audioCtx = null;
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'click') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(520, now);
+                    osc.frequency.exponentialRampToValueAtTime(780, now + 0.06);
+                    gain.gain.setValueAtTime(0.06, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+                    osc.start(now); osc.stop(now + 0.07);
+                } else if (type === 'throw') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(320, now);
+                    osc.frequency.exponentialRampToValueAtTime(720, now + 0.18);
+                    gain.gain.setValueAtTime(0.08, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+                    osc.start(now); osc.stop(now + 0.2);
+                } else if (type === 'catch') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.setValueAtTime(659.25, now + 0.1);
+                    osc.frequency.setValueAtTime(783.99, now + 0.2);
+                    osc.frequency.setValueAtTime(1046.5, now + 0.3);
+                    gain.gain.setValueAtTime(0.11, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+                    osc.start(now); osc.stop(now + 0.55);
+                } else if (type === 'fail') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(240, now);
+                    osc.frequency.exponentialRampToValueAtTime(110, now + 0.25);
+                    gain.gain.setValueAtTime(0.07, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+                    osc.start(now); osc.stop(now + 0.28);
+                } else if (type === 'hit') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(180, now);
+                    osc.frequency.exponentialRampToValueAtTime(60, now + 0.12);
+                    gain.gain.setValueAtTime(0.08, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+                    osc.start(now); osc.stop(now + 0.14);
+                } else if (type === 'shiny') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(880, now);
+                    osc.frequency.setValueAtTime(1174, now + 0.08);
+                    osc.frequency.setValueAtTime(1568, now + 0.16);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+                    osc.start(now); osc.stop(now + 0.45);
+                }
+            } catch (e) { /* Ignoruj błędy WebAudio */ }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            state.sound = soundEnabled;
+            updateSoundButton();
+            saveGame(false);
+        }
+
+        function updateSoundButton() {
+            const btn = document.getElementById('btn-sound');
+            btn.innerHTML = soundEnabled
+                ? '<i class="fa-solid fa-volume-high text-xs sm:text-sm text-sky-300"></i>'
+                : '<i class="fa-solid fa-volume-xmark text-xs sm:text-sm text-slate-500"></i>';
+        }
+
+        /* =========================================================
+           6. POKÉAPI Z TIMEOUTEM 3s + DETERMINISTYCZNY FALLBACK
+        ========================================================= */
+        function getGenById(id) {
+            const r = REGIONS.find(reg => id >= reg.min && id <= reg.max);
+            return r ? r.gen : 1;
+        }
+
+        function getFallbackPokemonData(id) {
+            const dict = LOCAL_POKE_DICT[id];
+            if (dict) {
+                const bst = dict[2];
+                return {
+                    id: id,
+                    name: dict[0],
+                    types: dict[1],
+                    bst: bst,
+                    hp: Math.round(bst * 0.16),
+                    atk: Math.round(bst * 0.18),
+                    def: Math.round(bst * 0.16),
+                    spd: Math.round(bst * 0.16),
+                    gen: getGenById(id),
+                    isFallback: true
+                };
+            }
+            // Deterministyczne typy i BST na podstawie ID
+            const t1 = TYPE_KEYS[(id * 7) % TYPE_KEYS.length];
+            const hasSecond = (id % 3 === 0);
+            const t2 = TYPE_KEYS[(id * 13 + 5) % TYPE_KEYS.length];
+            const types = (hasSecond && t2 !== t1) ? [t1, t2] : [t1];
+            const region = REGIONS.find(r => id >= r.min && id <= r.max);
+            const isElite = region && region.elites.includes(id);
+            const bst = isElite ? 540 + ((id * 17) % 120) : 290 + ((id * 37) % 245);
+
+            return {
+                id: id,
+                name: `Pokémon #${id}`,
+                types: types,
+                bst: bst,
+                hp: Math.round(bst * 0.16),
+                atk: Math.round(bst * 0.18),
+                def: Math.round(bst * 0.16),
+                spd: Math.round(bst * 0.16),
+                gen: getGenById(id),
+                isFallback: true
+            };
+        }
+
+        async function fetchPokemonData(id) {
+            if (apiCache[id] && !apiCache[id].isFallback) return apiCache[id];
+
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 3000);
+
+            try {
+                const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`, { signal: controller.signal });
+                clearTimeout(timer);
+                if (!res.ok) throw new Error('Błąd API');
+                const data = await res.json();
+
+                const stats = {};
+                let bst = 0;
+                data.stats.forEach(s => {
+                    stats[s.stat.name] = s.base_stat;
+                    bst += s.base_stat;
+                });
+
+                const formatted = {
+                    id: data.id,
+                    name: data.name.replace(/-/g, ' '),
+                    types: data.types.map(t => t.type.name),
+                    bst: bst,
+                    hp: stats.hp || 60,
+                    atk: Math.max(stats.attack || 50, stats['special-attack'] || 50),
+                    def: Math.max(stats.defense || 50, stats['special-defense'] || 50),
+                    spd: stats.speed || 50,
+                    gen: getGenById(data.id)
+                };
+
+                apiCache[id] = formatted;
+                saveApiCache();
+                return formatted;
+            } catch (err) {
+                clearTimeout(timer);
+                const fb = getFallbackPokemonData(id);
+                if (!apiCache[id]) apiCache[id] = fb;
+                return fb;
+            }
+        }
+
+        function saveApiCache() {
+            try {
+                localStorage.setItem(CACHE_KEY, JSON.stringify(apiCache));
+            } catch (e) { /* Limit localStorage */ }
+        }
+
+        function computeStats(pokeData, shiny = false) {
+            const bst = pokeData.bst || 350;
+            let rarity = { key: 'common', label: 'Zwykły', color: '#94a3b8', bg: 'bg-slate-600/50 text-slate-200', rank: 1 };
+            let baseCatch = 68;
+
+            if (bst >= 580) {
+                rarity = { key: 'legendary', label: 'Legendarny', color: '#fbbf24', bg: 'bg-amber-500/25 text-amber-300 border border-amber-400/40', rank: 4 };
+                baseCatch = 18;
+            } else if (bst >= 490) {
+                rarity = { key: 'epic', label: 'Epicki', color: '#c084fc', bg: 'bg-purple-500/25 text-purple-300 border border-purple-400/40', rank: 3 };
+                baseCatch = 34;
+            } else if (bst >= 380) {
+                rarity = { key: 'rare', label: 'Rzadki', color: '#38bdf8', bg: 'bg-sky-500/25 text-sky-300 border border-sky-400/40', rank: 2 };
+                baseCatch = 50;
+            }
+
+            let cp = Math.round(bst * 1.25);
+            let income = Math.max(1, Math.round(Math.pow(bst / 105, 2.25)));
+
+            if (shiny) {
+                cp = Math.round(cp * 1.3);
+                income = Math.round(income * 2.5);
+            }
+
+            const sellValue = Math.max(15, Math.round(income * 12));
+            return { rarity, cp, income, baseCatch, sellValue };
+        }
+
+        function getGlobalMultiplier() {
+            return 1 + ((state.incomeUpgradeLvl || 1) - 1) * 0.25;
+        }
+
+        function getTotalPassiveIncome() {
+            let base = 0;
+            for (const item of state.collection) {
+                const data = apiCache[item.id] || getFallbackPokemonData(item.id);
+                base += computeStats(data, item.shiny).income;
+            }
+            return Math.round(base * getGlobalMultiplier());
+        }
+
+        function getClickReward() {
+            const lvl = state.clickUpgradeLvl || 1;
+            const baseClick = 10 + (lvl - 1) * 15;
+            const passiveScale = Math.floor(getTotalPassiveIncome() * (0.15 + (lvl - 1) * 0.05));
+            return Math.max(5, Math.round((baseClick + passiveScale) * getGlobalMultiplier()));
+        }
+
+        function renderTypeBadges(types) {
+            return types.map(t => {
+                const meta = TYPE_META[t] || { pl: t, color: '#94a3b8' };
+                return `<span class="text-[10px] font-extrabold uppercase tracking-wide px-2 py-0.5 rounded-md border" style="background:${meta.color}22; color:${meta.color}; border-color:${meta.color}55;">${meta.pl}</span>`;
+            }).join('');
+        }
+
+        /* =========================================================
+           7. POMOCNICZE UI: TOASTY, CYFERKI, MODALE, NAWIGACJA
+        ========================================================= */
+        function showToast(msg, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const colors = {
+                success: 'border-emerald-400/50 bg-emerald-950/90 text-emerald-200',
+                error:   'border-rose-400/50 bg-rose-950/90 text-rose-200',
+                shiny:   'border-amber-400/80 bg-amber-950/90 text-amber-200 shadow-amber-400/30',
+                info:    'border-sky-400/50 bg-slate-900/95 text-sky-200'
+            };
+            const icons = {
+                success: 'fa-circle-check text-emerald-400',
+                error:   'fa-circle-exclamation text-rose-400',
+                shiny:   'fa-star text-amber-300',
+                info:    'fa-circle-info text-sky-400'
+            };
+
+            const toast = document.createElement('div');
+            toast.className = `pointer-events-auto glass-strong px-4 py-3 rounded-2xl border text-xs sm:text-sm font-bold flex items-center gap-2.5 shadow-xl transition-all duration-300 translate-x-6 opacity-0 ${colors[type] || colors.info}`;
+            toast.innerHTML = `<i class="fa-solid ${icons[type] || icons.info} text-base"></i><span>${msg}</span>`;
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => toast.classList.remove('translate-x-6', 'opacity-0'));
+
+            setTimeout(() => {
+                toast.classList.add('translate-x-6', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3200);
+        }
+
+        function spawnFloatingNumber(text, x, y, colorClass = 'text-amber-300') {
+            const el = document.createElement('div');
+            el.className = `floating-number text-sm sm:text-base ${colorClass}`;
+            el.textContent = text;
+            el.style.left = `${x}px`;
+            el.style.top = `${y}px`;
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 1150);
+        }
+
+        function openCustomModal(htmlContent, buttons) {
+            document.getElementById('custom-modal-content').innerHTML = htmlContent;
+            const actions = document.getElementById('custom-modal-actions');
+            actions.innerHTML = '';
+            buttons.forEach(btn => {
+                const b = document.createElement('button');
+                b.className = `game-btn px-5 py-2.5 rounded-xl font-bold text-sm ${btn.cls}`;
+                b.textContent = btn.text;
+                b.onclick = () => {
+                    closeCustomModal();
+                    if (btn.onClick) btn.onClick();
+                };
+                actions.appendChild(b);
+            });
+            document.getElementById('custom-modal').classList.remove('hidden');
+        }
+
+        function closeCustomModal() {
+            document.getElementById('custom-modal').classList.add('hidden');
+        }
+
+        function switchTab(tabName) {
+            playSound('click');
+            activeTab = tabName;
+            document.querySelectorAll('.tab-section').forEach(s => s.classList.add('hidden'));
+            const target = document.getElementById(`tab-${tabName}`);
+            if (target) target.classList.remove('hidden');
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                if (btn.dataset.tab === tabName) btn.classList.add('nav-tab-active');
+                else btn.classList.remove('nav-tab-active');
+            });
+
+            if (tabName === 'collection') renderCollection();
+            if (tabName === 'battle') renderTrainers();
+            if (tabName === 'eggs') renderEggsTab();
+            if (tabName === 'shop') renderShop();
+            if (tabName === 'pokedex') renderPokedex();
+        }
+
+        function updateTopBar() {
+            document.getElementById('ui-coins').textContent = Math.floor(state.coins).toLocaleString('pl-PL');
+            document.getElementById('ui-income').textContent = `+${getTotalPassiveIncome().toLocaleString('pl-PL')}/s`;
+            document.getElementById('ui-badges').textContent = `${state.badges.length}/${TRAINERS.length}`;
+            document.getElementById('ui-pokedex').textContent = `${Object.keys(state.pokedex).length}/1025`;
+            document.getElementById('hunt-total-caught').textContent = state.totalCaught.toLocaleString('pl-PL');
+
+            const clickRewardEl = document.getElementById('ui-click-reward');
+            if (clickRewardEl) clickRewardEl.textContent = `+${getClickReward().toLocaleString('pl-PL')}`;
+
+            const hasReadyEgg = state.eggs.some(e => e.remaining <= 0);
+            document.getElementById('nav-egg-badge').classList.toggle('hidden', !hasReadyEgg);
+            document.getElementById('nav-egg-badge-mob').classList.toggle('hidden', !hasReadyEgg);
+        }
+
+        function quickClickCoins(evt) {
+            const reward = getClickReward();
+            state.coins += reward;
+            playSound('click');
+            updateTopBar();
+            if (evt) {
+                spawnFloatingNumber(`+${reward.toLocaleString('pl-PL')} 🪙`, evt.clientX, evt.clientY - 16, 'text-amber-300');
+            }
+        }
+
+        /* =========================================================
+           8. ZAKŁADKA 1: ŁAPANIE (POLOWANIE I NATYCHMIASTOWE OBRAZKI)
+        ========================================================= */
+        function renderHuntRegions() {
+            const container = document.getElementById('hunt-region-list');
+            container.innerHTML = REGIONS.map(r => {
+                const unlocked = state.unlockedRegions.includes(r.gen);
+                const selected = state.selectedRegion === r.gen;
+                return `
+                    <button onclick="selectHuntRegion(${r.gen})" class="game-btn px-3 py-1.5 rounded-xl text-xs font-bold border flex items-center gap-1.5 ${
+                        selected
+                            ? 'bg-sky-500/25 border-sky-400 text-white shadow-md shadow-sky-500/20'
+                            : unlocked
+                            ? 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+                            : 'bg-slate-900/60 border-white/5 text-slate-500'
+                    }">
+                        <span class="w-2 h-2 rounded-full" style="background:${r.color}"></span>
+                        <span>Gen ${r.gen}: ${r.name}</span>
+                        ${unlocked ? '' : '<i class="fa-solid fa-lock text-[10px]"></i>'}
+                    </button>
+                `;
+            }).join('');
+
+            const curr = REGIONS.find(r => r.gen === state.selectedRegion) || REGIONS[0];
+            document.getElementById('hunt-region-info').textContent = `Gen ${curr.gen} • ${curr.name} (#${curr.min}–#${curr.max})`;
+        }
+
+        function selectHuntRegion(gen) {
+            if (!state.unlockedRegions.includes(gen)) {
+                const r = REGIONS.find(x => x.gen === gen);
+                showToast(`Region ${r.name} jest zablokowany! Odblokuj go w Sklepie za ${r.cost.toLocaleString('pl-PL')} monet.`, 'info');
+                return;
+            }
+            playSound('click');
+            state.selectedRegion = gen;
+            renderHuntRegions();
+            findWildPokemon();
+        }
+
+        function renderWildCardUI(data, isShiny) {
+            const stats = computeStats(data, isShiny);
+            const primaryType = data.types[0] || 'normal';
+            const typeColor = (TYPE_META[primaryType] || { color: '#38bdf8' }).color;
+
+            const card = document.getElementById('wild-card');
+            card.classList.toggle('shiny-card', isShiny);
+            card.style.borderColor = isShiny ? '' : `${typeColor}66`;
+
+            document.getElementById('wild-type-glow').style.background =
+                `radial-gradient(circle at 50% 45%, ${isShiny ? '#facc15' : typeColor} 0%, transparent 70%)`;
+
+            document.getElementById('wild-id').textContent = `#${String(data.id).padStart(4, '0')}`;
+            const rarityEl = document.getElementById('wild-rarity');
+            rarityEl.textContent = stats.rarity.label;
+            rarityEl.className = `text-xs font-extrabold px-2.5 py-0.5 rounded-lg ${stats.rarity.bg}`;
+
+            document.getElementById('wild-shiny-badge').classList.toggle('hidden', !isShiny);
+            document.getElementById('wild-sparkles').classList.toggle('hidden', !isShiny);
+
+            document.getElementById('wild-name').textContent = data.name;
+            document.getElementById('wild-types').innerHTML = renderTypeBadges(data.types);
+            document.getElementById('wild-cp').textContent = stats.cp.toLocaleString('pl-PL');
+            document.getElementById('wild-income').textContent = `+${Math.round(stats.income * getGlobalMultiplier())}/s`;
+            document.getElementById('wild-base-chance').textContent = `${stats.baseCatch}%`;
+            document.getElementById('wild-owned-tag').classList.toggle('hidden', !state.pokedex[data.id]);
+
+            renderBallButtons();
+        }
+
+        async function findWildPokemon() {
+            if (isCatching) return;
+
+            const region = REGIONS.find(r => r.gen === state.selectedRegion) || REGIONS[0];
+            const id = Math.floor(Math.random() * (region.max - region.min + 1)) + region.min;
+            const isShiny = Math.random() < 0.02; // 2% szansy na Shiny
+
+            // 1. NATYCHMIASTOWE wyświetlenie obrazka i danych lokalnych (zero czekania na API!)
+            const instantData = apiCache[id] || getFallbackPokemonData(id);
+            currentWild = { id, shiny: isShiny, data: instantData };
+
+            const imgEl = document.getElementById('wild-img');
+            imgEl.classList.remove('animate-absorb');
+            imgEl.style.opacity = '1';
+            imgEl.dataset.fallbackStep = '0';
+            imgEl.onerror = function () { window.handlePokeImgError(this, id, isShiny); };
+            imgEl.src = getArtworkUrl(id, isShiny);
+
+            document.getElementById('catch-ball-overlay').classList.add('hidden');
+            renderWildCardUI(instantData, isShiny);
+
+            if (isShiny) {
+                playSound('shiny');
+                showToast(`✨ Spotkano rzadkiego SHINY Pokémona!`, 'shiny');
+            }
+
+            // 2. Dociągnięcie dokładnych danych z PokéAPI w tle (timeout 3s) i aktualizacja karty
+            if (!apiCache[id] || apiCache[id].isFallback) {
+                const freshData = await fetchPokemonData(id);
+                if (currentWild && currentWild.id === id) {
+                    currentWild.data = freshData;
+                    renderWildCardUI(freshData, isShiny);
+                }
+            }
+        }
+
+        function renderBallButtons() {
+            const container = document.getElementById('ball-buttons-container');
+            const baseChance = currentWild ? computeStats(currentWild.data, currentWild.shiny).baseCatch : 50;
+
+            container.innerHTML = Object.values(BALLS).map(b => {
+                const count = state.balls[b.id] || 0;
+                const chance = b.id === 'master' ? 100 : Math.min(98, baseChance + b.bonus);
+                return `
+                    <button onclick="throwBall('${b.id}')" ${count <= 0 || isCatching ? 'disabled' : ''} class="game-btn w-full p-2.5 sm:p-3 rounded-2xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 flex items-center justify-between gap-3 text-left">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-10 h-10 shrink-0">${getPokeballSvg(b.id)}</div>
+                            <div class="min-w-0">
+                                <div class="font-extrabold text-sm text-white flex items-center gap-1.5">
+                                    <span>${b.name}</span>
+                                    <span class="text-[10px] px-1.5 py-0.5 rounded-md bg-sky-500/20 text-sky-300 font-bold">${chance}%</span>
+                                </div>
+                                <div class="text-[11px] text-slate-400 truncate">${b.desc}</div>
+                            </div>
+                        </div>
+                        <div class="shrink-0 text-right">
+                            <span class="text-sm font-black tabular-nums ${count > 0 ? 'text-white' : 'text-rose-400'}">x${count}</span>
+                        </div>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function throwBall(ballId) {
+            if (isCatching || !currentWild) return;
+            if ((state.balls[ballId] || 0) <= 0) {
+                showToast(`Brak ${BALLS[ballId].name}! Kup więcej w Sklepie.`, 'error');
+                return;
+            }
+
+            isCatching = true;
+            state.balls[ballId]--;
+            renderBallButtons();
+            playSound('throw');
+
+            const wildSnap = { ...currentWild };
+            const stats = computeStats(wildSnap.data, wildSnap.shiny);
+            const chance = ballId === 'master' ? 100 : Math.min(98, stats.baseCatch + BALLS[ballId].bonus);
+            const success = (Math.random() * 100) <= chance;
+
+            const imgEl = document.getElementById('wild-img');
+            const overlay = document.getElementById('catch-ball-overlay');
+            const ballSvgWrap = document.getElementById('catch-ball-svg');
+            const statusText = document.getElementById('catch-status-text');
+
+            imgEl.classList.add('animate-absorb');
+            ballSvgWrap.innerHTML = getPokeballSvg(ballId);
+            ballSvgWrap.className = 'w-20 h-20 drop-shadow-[0_10px_25px_rgba(0,0,0,0.7)] animate-ball-throw';
+            statusText.textContent = `Rzut: ${BALLS[ballId].name}...`;
+            overlay.classList.remove('hidden');
+
+            setTimeout(() => {
+                ballSvgWrap.className = 'w-20 h-20 drop-shadow-[0_10px_25px_rgba(0,0,0,0.7)] animate-ball-shake';
+                statusText.textContent = 'Kołysanie...';
+            }, 650);
+
+            setTimeout(() => {
+                ballSvgWrap.className = 'w-20 h-20 drop-shadow-[0_10px_25px_rgba(0,0,0,0.7)]';
+                if (success) {
+                    playSound(wildSnap.shiny ? 'shiny' : 'catch');
+                    addPokemonToCollection(wildSnap.data, wildSnap.shiny);
+                    const bonusCoins = Math.max(10, Math.round(stats.income * 5));
+                    state.coins += bonusCoins;
+
+                    statusText.textContent = `🎉 Złapano! (+${bonusCoins} monet)`;
+                    showToast(
+                        `${wildSnap.shiny ? '✨ SHINY ' : ''}${capitalize(wildSnap.data.name)} złapany! (+${bonusCoins} monet)`,
+                        wildSnap.shiny ? 'shiny' : 'success'
+                    );
+                    saveGame(false);
+                    updateTopBar();
+
+                    setTimeout(() => {
+                        isCatching = false;
+                        findWildPokemon();
+                    }, 950);
+                } else {
+                    playSound('fail');
+                    statusText.textContent = '💨 Uciekł z piłki!';
+                    showToast(`${capitalize(wildSnap.data.name)} wydostał się z ${BALLS[ballId].name}!`, 'error');
+
+                    setTimeout(() => {
+                        overlay.classList.add('hidden');
+                        imgEl.classList.remove('animate-absorb');
+                        isCatching = false;
+                        renderBallButtons();
+                    }, 750);
+                }
+            }, 1550);
+        }
+
+        function addPokemonToCollection(pokeData, isShiny) {
+            const uid = 'pk_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+            state.collection.push({
+                uid,
+                id: pokeData.id,
+                shiny: !!isShiny,
+                caughtAt: Date.now()
+            });
+            state.totalCaught++;
+
+            if (!state.pokedex[pokeData.id]) {
+                state.pokedex[pokeData.id] = { seen: true, shiny: !!isShiny };
+            } else if (isShiny) {
+                state.pokedex[pokeData.id].shiny = true;
+            }
+
+            // Automatycznie dodaj do drużyny, jeśli jest mniej niż 6 Pokémonów
+            if (state.team.length < 6) {
+                state.team.push(uid);
+            }
+        }
+
+        /* =========================================================
+           9. ZAKŁADKA 2: KOLEKCJA (BOX I DRUŻYNA)
+        ========================================================= */
+        function renderCollection() {
+            renderActiveTeam();
+
+            const genFilter = document.getElementById('col-filter-gen').value;
+            const sortBy = document.getElementById('col-sort').value;
+            const onlyShiny = document.getElementById('col-only-shiny').checked;
+
+            let list = state.collection.map(item => {
+                const data = apiCache[item.id] || getFallbackPokemonData(item.id);
+                const stats = computeStats(data, item.shiny);
+                return { item, data, stats };
+            });
+
+            if (genFilter !== 'all') {
+                const g = parseInt(genFilter, 10);
+                list = list.filter(x => x.data.gen === g);
+            }
+            if (onlyShiny) {
+                list = list.filter(x => x.item.shiny);
+            }
+
+            list.sort((a, b) => {
+                if (sortBy === 'cp') return b.stats.cp - a.stats.cp;
+                if (sortBy === 'income') return b.stats.income - a.stats.income;
+                if (sortBy === 'rarity') return b.stats.rarity.rank - a.stats.rarity.rank || b.stats.cp - a.stats.cp;
+                return a.data.id - b.data.id;
+            });
+
+            const grid = document.getElementById('collection-grid');
+            if (list.length === 0) {
+                grid.innerHTML = `<div class="col-span-full glass rounded-2xl p-10 text-center text-slate-400 text-sm">Brak Pokémonów spełniających wybrane kryteria.</div>`;
+                return;
+            }
+
+            const mult = getGlobalMultiplier();
+            grid.innerHTML = list.map(({ item, data, stats }) => {
+                const inTeam = state.team.includes(item.uid);
+                const typeColor = (TYPE_META[data.types[0]] || { color: '#64748b' }).color;
+
+                return `
+                    <div class="glass rounded-2xl p-3 flex flex-col justify-between relative transition-all hover:-translate-y-1 ${item.shiny ? 'shiny-card' : ''}" style="border-color:${item.shiny ? '' : typeColor + '55'}">
+                        <div class="flex items-center justify-between text-[10px] font-extrabold">
+                            <span class="text-slate-400">#${String(data.id).padStart(4, '0')}</span>
+                            <span class="px-1.5 py-0.5 rounded-md ${stats.rarity.bg}">${stats.rarity.label}</span>
+                        </div>
+
+                        <div class="relative my-2 flex justify-center">
+                            ${item.shiny ? '<span class="absolute top-0 left-0 text-xs" title="Shiny">✨</span>' : ''}
+                            ${inTeam ? '<span class="absolute top-0 right-0 text-[10px] px-1.5 py-0.5 rounded-md bg-sky-500 text-slate-950 font-black">DRUŻYNA</span>' : ''}
+                            <img src="${getArtworkUrl(data.id, item.shiny)}" referrerpolicy="no-referrer" onerror="window.handlePokeImgError(this, ${data.id}, ${item.shiny})" alt="${data.name}" class="w-24 h-24 object-contain drop-shadow-[0_10px_14px_rgba(0,0,0,0.6)]" loading="lazy">
+                        </div>
+
+                        <div>
+                            <div class="font-extrabold text-sm text-white capitalize truncate text-center">${data.name}</div>
+                            <div class="flex justify-center gap-1 mt-1">${renderTypeBadges(data.types)}</div>
+                            <div class="flex items-center justify-between text-xs mt-2.5 pt-2 border-t border-white/10">
+                                <span class="font-black text-sky-300">${stats.cp} CP</span>
+                                <span class="font-bold text-emerald-400">+${Math.round(stats.income * mult)}/s</span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-1.5 mt-2.5">
+                            <button onclick="toggleTeamMember('${item.uid}')" class="game-btn py-1.5 rounded-xl text-[11px] font-bold ${inTeam ? 'bg-sky-500/25 text-sky-200 border border-sky-400/40' : 'bg-white/10 hover:bg-white/15 text-white'}">
+                                ${inTeam ? 'Zdejmij' : 'Do drużyny'}
+                            </button>
+                            <button onclick="releaseSinglePokemon('${item.uid}')" class="game-btn py-1.5 rounded-xl text-[11px] font-bold bg-rose-500/15 hover:bg-rose-500/30 text-rose-300 border border-rose-400/25" title="Uwolnij za ${stats.sellValue} monet">
+                                +${stats.sellValue} <i class="fa-solid fa-coins text-amber-400"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderActiveTeam() {
+            const container = document.getElementById('active-team-grid');
+            let totalCp = 0;
+            let html = '';
+
+            for (let i = 0; i < 6; i++) {
+                const uid = state.team[i];
+                const item = uid ? state.collection.find(c => c.uid === uid) : null;
+                if (item) {
+                    const data = apiCache[item.id] || getFallbackPokemonData(item.id);
+                    const stats = computeStats(data, item.shiny);
+                    totalCp += stats.cp;
+
+                    html += `
+                        <div onclick="toggleTeamMember('${item.uid}')" class="cursor-pointer glass rounded-2xl p-2.5 flex items-center gap-2.5 hover:border-rose-400/50 transition-all ${item.shiny ? 'shiny-card' : ''}" title="Kliknij, aby zdjąć z drużyny">
+                            <img src="${getArtworkUrl(data.id, item.shiny)}" referrerpolicy="no-referrer" onerror="window.handlePokeImgError(this, ${data.id}, ${item.shiny})" class="w-12 h-12 object-contain shrink-0">
+                            <div class="min-w-0">
+                                <div class="text-xs font-extrabold text-white capitalize truncate">${item.shiny ? '✨' : ''}${data.name}</div>
+                                <div class="text-[11px] font-bold text-sky-300">${stats.cp} CP</div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="rounded-2xl p-2.5 border border-dashed border-white/15 bg-white/[0.02] flex items-center justify-center text-xs text-slate-500 h-[68px]">
+                            Wolny slot
+                        </div>
+                    `;
+                }
+            }
+
+            container.innerHTML = html;
+            document.getElementById('team-count-badge').textContent = `${state.team.length}/6`;
+            document.getElementById('team-total-cp').textContent = `${totalCp.toLocaleString('pl-PL')} CP`;
+        }
+
+        function toggleTeamMember(uid) {
+            playSound('click');
+            const idx = state.team.indexOf(uid);
+            if (idx > -1) {
+                state.team.splice(idx, 1);
+            } else {
+                if (state.team.length >= 6) {
+                    showToast('Drużyna jest pełna (max 6)! Zdejmij najpierw innego Pokémona.', 'error');
+                    return;
+                }
+                state.team.push(uid);
+            }
+            saveGame(false);
+            renderCollection();
+        }
+
+        function releaseSinglePokemon(uid) {
+            if (state.team.includes(uid)) {
+                showToast('Zdejmij najpierw tego Pokémona z aktywnej drużyny!', 'error');
+                return;
+            }
+            const idx = state.collection.findIndex(c => c.uid === uid);
+            if (idx === -1) return;
+            const item = state.collection[idx];
+            const data = apiCache[item.id] || getFallbackPokemonData(item.id);
+            const stats = computeStats(data, item.shiny);
+
+            if (item.shiny) {
+                openCustomModal(
+                    `<div class="text-4xl mb-2">✨</div><h3 class="text-lg font-black text-amber-300">Uwaga: Pokémon Shiny!</h3><p class="text-sm text-slate-300 mt-2">Czy na pewno chcesz uwolnić <b>Shiny ${capitalize(data.name)}</b> za <b>${stats.sellValue} monet</b>?</p>`,
+                    [
+                        { text: 'Anuluj', cls: 'bg-white/10 text-white' },
+                        { text: 'Uwolnij', cls: 'bg-rose-500 text-white', onClick: () => executeReleaseSingle(uid, stats.sellValue, data.name) }
+                    ]
+                );
+            } else {
+                executeReleaseSingle(uid, stats.sellValue, data.name);
+            }
+        }
+
+        function executeReleaseSingle(uid, value, name) {
+            state.collection = state.collection.filter(c => c.uid !== uid);
+            state.coins += value;
+            playSound('click');
+            showToast(`Uwolniono ${capitalize(name)} (+${value} monet).`, 'info');
+            saveGame(false);
+            updateTopBar();
+            renderCollection();
+        }
+
+        function promptReleaseDuplicates() {
+            const bestBySpecies = {};
+            state.collection.forEach(item => {
+                const data = apiCache[item.id] || getFallbackPokemonData(item.id);
+                const cp = computeStats(data, item.shiny).cp;
+                if (!bestBySpecies[item.id] || cp > bestBySpecies[item.id].cp) {
+                    bestBySpecies[item.id] = { uid: item.uid, cp };
+                }
+            });
+
+            const toRelease = state.collection.filter(item => {
+                if (item.shiny) return false;
+                if (state.team.includes(item.uid)) return false;
+                if (bestBySpecies[item.id] && bestBySpecies[item.id].uid === item.uid) return false;
+                return true;
+            });
+
+            if (toRelease.length === 0) {
+                showToast('Nie masz żadnych zbędnych duplikatów do uwolnienia!', 'info');
+                return;
+            }
+
+            let totalCoins = 0;
+            toRelease.forEach(item => {
+                const data = apiCache[item.id] || getFallbackPokemonData(item.id);
+                totalCoins += computeStats(data, item.shiny).sellValue;
+            });
+
+            openCustomModal(
+                `<div class="text-4xl mb-2">🧹</div>
+                 <h3 class="text-lg font-black text-white">Uwolnić duplikaty?</h3>
+                 <p class="text-sm text-slate-300 mt-2">Zostanie uwolnionych <b class="text-rose-300">${toRelease.length}</b> powtarzających się Pokémonów za łącznie <b class="text-amber-300">${totalCoins.toLocaleString('pl-PL')} monet</b>.</p>
+                 <p class="text-xs text-slate-400 mt-2">Wersje Shiny, drużyna i najsilniejsze sztuki każdego gatunku są bezpieczne.</p>`,
+                [
+                    { text: 'Anuluj', cls: 'bg-white/10 text-white' },
+                    {
+                        text: `Sprzedaj (+${totalCoins.toLocaleString('pl-PL')})`,
+                        cls: 'bg-gradient-to-r from-rose-500 to-orange-500 text-white',
+                        onClick: () => {
+                            const releaseSet = new Set(toRelease.map(x => x.uid));
+                            state.collection = state.collection.filter(c => !releaseSet.has(c.uid));
+                            state.coins += totalCoins;
+                            playSound('catch');
+                            showToast(`Uwolniono ${toRelease.length} duplikatów (+${totalCoins.toLocaleString('pl-PL')} monet)!`, 'success');
+                            saveGame(false);
+                            updateTopBar();
+                            renderCollection();
+                        }
+                    }
+                ]
+            );
+        }
+
+        /* =========================================================
+           10. ZAKŁADKA 3: WALKI TUROWE I ODZNAKI (SVG)
+        ========================================================= */
+        function renderTrainers() {
+            const showcase = document.getElementById('badges-showcase');
+            showcase.innerHTML = TRAINERS.map(t => {
+                const won = state.badges.includes(t.id);
+                return `
+                    <div class="px-2.5 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-2 ${
+                        won ? 'bg-amber-500/15 border-amber-400/50 text-amber-200' : 'bg-white/[0.03] border-white/10 text-slate-500 grayscale opacity-55'
+                    }" title="${t.badge} (${t.name})">
+                        <div class="w-5 h-5 shrink-0">${getBadgeSvg(t)}</div>
+                        <span class="hidden sm:inline">${t.badge}</span>
+                    </div>
+                `;
+            }).join('');
+            document.getElementById('battle-badges-summary').textContent = `${state.badges.length} / ${TRAINERS.length} zdobytych`;
+
+            const grid = document.getElementById('trainers-grid');
+            grid.innerHTML = TRAINERS.map(t => {
+                const region = REGIONS.find(r => r.gen === t.gen);
+                const won = state.badges.includes(t.id);
+                const ballName = BALLS[t.rewardBall.type].name;
+
+                return `
+                    <div class="glass rounded-2xl p-4 flex flex-col justify-between border ${won ? 'border-emerald-400/40' : 'border-white/10'}">
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-white/10 text-sky-300">Gen ${t.gen} • ${region.name}</span>
+                                ${won ? '<span class="text-[10px] font-black px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300"><i class="fa-solid fa-check mr-1"></i>POKONANY</span>' : ''}
+                            </div>
+
+                            <div class="flex items-center gap-3">
+                                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-white/15 flex items-center justify-center p-2 shrink-0">
+                                    ${getBadgeSvg(t)}
+                                </div>
+                                <div>
+                                    <h3 class="font-black text-base text-white">${t.name}</h3>
+                                    <div class="text-xs text-amber-300 font-semibold">${t.badge}</div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2 mt-3 bg-black/30 rounded-xl p-2">
+                                ${t.team.map(pid => `
+                                    <img src="${getArtworkUrl(pid, false)}" referrerpolicy="no-referrer" onerror="window.handlePokeImgError(this, ${pid}, false)" class="w-11 h-11 object-contain" title="Pokémon #${pid}" loading="lazy">
+                                `).join('')}
+                            </div>
+
+                            <div class="mt-3 text-xs text-slate-300 flex items-center justify-between">
+                                <span>Nagroda:</span>
+                                <span class="font-bold text-amber-300">+${t.rewardCoins.toLocaleString('pl-PL')} monet, ${t.rewardBall.qty}x ${ballName}</span>
+                            </div>
+                        </div>
+
+                        <button onclick="startBattle('${t.id}')" class="game-btn mt-4 w-full py-2.5 rounded-xl bg-gradient-to-r from-rose-500 to-indigo-600 text-white font-extrabold text-sm shadow-lg shadow-rose-500/20">
+                            <i class="fa-solid fa-khanda mr-1.5"></i> ${won ? 'Walcz ponownie (50% monet)' : 'Wyzwij na pojedynek'}
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function startBattle(trainerId) {
+            if (state.team.length === 0) {
+                showToast('Dodaj przynajmniej 1 Pokémona do aktywnej drużyny w zakładce Kolekcja!', 'error');
+                return;
+            }
+
+            const trainer = TRAINERS.find(t => t.id === trainerId);
+            if (!trainer) return;
+
+            playSound('click');
+
+            const playerTeam = [];
+            for (const uid of state.team) {
+                const item = state.collection.find(c => c.uid === uid);
+                if (!item) continue;
+                const data = apiCache[item.id] || getFallbackPokemonData(item.id);
+                const stats = computeStats(data, item.shiny);
+                const maxHp = Math.round(data.hp * 2.4 + stats.cp * 0.25);
+                playerTeam.push({
+                    name: data.name,
+                    id: data.id,
+                    shiny: item.shiny,
+                    types: data.types,
+                    cp: stats.cp,
+                    atk: Math.round(data.atk * (item.shiny ? 1.3 : 1) + stats.cp * 0.12),
+                    maxHp: maxHp,
+                    hp: maxHp
+                });
+            }
+
+            const enemyTeam = [];
+            for (const pid of trainer.team) {
+                const data = apiCache[pid] || getFallbackPokemonData(pid);
+                const stats = computeStats(data, false);
+                const maxHp = Math.round((data.hp * 2.2 + stats.cp * 0.22) * trainer.scale);
+                enemyTeam.push({
+                    name: data.name,
+                    id: data.id,
+                    shiny: false,
+                    types: data.types,
+                    cp: Math.round(stats.cp * trainer.scale),
+                    atk: Math.round((data.atk + stats.cp * 0.1) * trainer.scale),
+                    maxHp: maxHp,
+                    hp: maxHp
+                });
+            }
+
+            battle = {
+                trainer,
+                playerTeam,
+                enemyTeam,
+                pIdx: 0,
+                eIdx: 0,
+                energy: 0,
+                busy: false,
+                auto: false,
+                finished: false
+            };
+
+            const region = REGIONS.find(r => r.gen === trainer.gen);
+            document.getElementById('arena-region-tag').textContent = `GEN ${trainer.gen} • ${region.name}`;
+            document.getElementById('arena-trainer-name').textContent = `${trainer.name} — ${trainer.badge}`;
+            document.getElementById('battle-log').innerHTML = '';
+            document.getElementById('btn-atk-auto').innerHTML = '<i class="fa-solid fa-robot mr-1"></i> Auto: WYŁ';
+
+            logBattle(`⚔️ Rozpoczyna się walka z ${trainer.name}!`, 'text-sky-300 font-bold');
+            updateBattleUI();
+            document.getElementById('battle-modal').classList.remove('hidden');
+        }
+
+        function updateBattleUI() {
+            if (!battle) return;
+            const p = battle.playerTeam[battle.pIdx];
+            const e = battle.enemyTeam[battle.eIdx];
+
+            document.getElementById('battle-p-name').textContent = `${p.shiny ? '✨ ' : ''}${p.name}`;
+            document.getElementById('battle-p-hp-text').textContent = `${Math.max(0, p.hp)}/${p.maxHp}`;
+            const pPct = Math.max(0, (p.hp / p.maxHp) * 100);
+            const pBar = document.getElementById('battle-p-hp-bar');
+            pBar.style.width = `${pPct}%`;
+            pBar.className = `hp-bar-fill h-full rounded-full ${pPct > 50 ? 'bg-emerald-400' : pPct > 25 ? 'bg-amber-400' : 'bg-rose-500'}`;
+            document.getElementById('battle-p-types').innerHTML = renderTypeBadges(p.types);
+            const pImg = document.getElementById('battle-p-img');
+            pImg.dataset.fallbackStep = '0';
+            pImg.onerror = function () { window.handlePokeImgError(this, p.id, p.shiny); };
+            pImg.src = getArtworkUrl(p.id, p.shiny);
+
+            document.getElementById('battle-energy-text').textContent = `${battle.energy}%`;
+            document.getElementById('battle-energy-bar').style.width = `${battle.energy}%`;
+            document.getElementById('btn-atk-super').disabled = battle.energy < 100 || battle.busy || battle.finished;
+
+            document.getElementById('battle-e-name').textContent = e.name;
+            document.getElementById('battle-e-hp-text').textContent = `${Math.max(0, e.hp)}/${e.maxHp}`;
+            const ePct = Math.max(0, (e.hp / e.maxHp) * 100);
+            document.getElementById('battle-e-hp-bar').style.width = `${ePct}%`;
+            document.getElementById('battle-e-types').innerHTML = renderTypeBadges(e.types);
+            document.getElementById('battle-e-cp').textContent = `Siła: ${e.cp} CP`;
+            const eImg = document.getElementById('battle-e-img');
+            eImg.dataset.fallbackStep = '0';
+            eImg.onerror = function () { window.handlePokeImgError(this, e.id, false); };
+            eImg.src = getArtworkUrl(e.id, false);
+
+            document.getElementById('battle-p-dots').innerHTML = battle.playerTeam.map((m, idx) =>
+                `<span class="w-2.5 h-2.5 rounded-full ${m.hp > 0 ? (idx === battle.pIdx ? 'bg-sky-400 ring-2 ring-sky-300/50' : 'bg-emerald-400') : 'bg-slate-700'}"></span>`
+            ).join('');
+            document.getElementById('battle-e-dots').innerHTML = battle.enemyTeam.map((m, idx) =>
+                `<span class="w-2.5 h-2.5 rounded-full ${m.hp > 0 ? (idx === battle.eIdx ? 'bg-rose-400 ring-2 ring-rose-300/50' : 'bg-amber-400') : 'bg-slate-700'}"></span>`
+            ).join('');
+        }
+
+        function getTypeMultiplier(atkTypes, defTypes) {
+            let mult = 1.0;
+            for (const at of atkTypes) {
+                const strongAgainst = TYPE_ADVANTAGE[at] || [];
+                for (const dt of defTypes) {
+                    if (strongAgainst.includes(dt)) mult = Math.max(mult, 1.5);
+                }
+            }
+            if (mult === 1.0) {
+                for (const dt of defTypes) {
+                    const strongAgainst = TYPE_ADVANTAGE[dt] || [];
+                    for (const at of atkTypes) {
+                        if (strongAgainst.includes(at)) mult = 0.7;
+                    }
+                }
+            }
+            return mult;
+        }
+
+        function logBattle(msg, cls = 'text-slate-300') {
+            const log = document.getElementById('battle-log');
+            const line = document.createElement('div');
+            line.className = cls;
+            line.textContent = msg;
+            log.appendChild(line);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function triggerAnim(elId, animClass) {
+            const el = document.getElementById(elId);
+            el.classList.remove(animClass);
+            void el.offsetWidth;
+            el.classList.add(animClass);
+        }
+
+        function battleAction(mode) {
+            if (!battle || battle.busy || battle.finished) return;
+            if (mode === 'super' && battle.energy < 100) return;
+
+            battle.busy = true;
+            const p = battle.playerTeam[battle.pIdx];
+            const e = battle.enemyTeam[battle.eIdx];
+
+            const typeMult = getTypeMultiplier(p.types, e.types);
+            const powerMult = mode === 'super' ? 1.85 : 1.0;
+            const variance = 0.9 + Math.random() * 0.2;
+            const dmg = Math.max(8, Math.round(p.atk * 0.45 * typeMult * powerMult * variance));
+
+            if (mode === 'super') battle.energy = 0;
+            else battle.energy = Math.min(100, battle.energy + 35);
+
+            e.hp = Math.max(0, e.hp - dmg);
+            playSound('hit');
+            triggerAnim('battle-p-img', 'animate-lunge-right');
+            triggerAnim('battle-e-img', 'animate-hit');
+
+            const effText = typeMult > 1 ? ' (Super skuteczny!)' : typeMult < 1 ? ' (Mało skuteczny)' : '';
+            logBattle(`${capitalize(p.name)} używa ${mode === 'super' ? '🔥 SUPER ATAKU' : 'Ataku'} i zadaje ${dmg} obrażeń!${effText}`, mode === 'super' ? 'text-amber-300 font-bold' : 'text-sky-200');
+            updateBattleUI();
+
+            if (e.hp <= 0) {
+                logBattle(`💥 ${capitalize(e.name)} przeciwnika został pokonany!`, 'text-emerald-300 font-bold');
+                const nextEnemy = battle.enemyTeam.findIndex(m => m.hp > 0);
+                if (nextEnemy === -1) {
+                    finishBattle(true);
+                    return;
+                }
+                setTimeout(() => {
+                    battle.eIdx = nextEnemy;
+                    logBattle(`Przeciwnik wystawia: ${capitalize(battle.enemyTeam[battle.eIdx].name)}!`, 'text-rose-300');
+                    battle.busy = false;
+                    updateBattleUI();
+                }, 650);
+                return;
+            }
+
+            setTimeout(() => {
+                if (!battle || battle.finished) return;
+                const eMult = getTypeMultiplier(e.types, p.types);
+                const eDmg = Math.max(6, Math.round(e.atk * 0.42 * eMult * (0.9 + Math.random() * 0.2)));
+                p.hp = Math.max(0, p.hp - eDmg);
+
+                playSound('hit');
+                triggerAnim('battle-e-img', 'animate-lunge-left');
+                triggerAnim('battle-p-img', 'animate-hit');
+                logBattle(`${capitalize(e.name)} kontratakuje za ${eDmg} obrażeń!`, 'text-rose-200');
+                updateBattleUI();
+
+                if (p.hp <= 0) {
+                    logBattle(`💀 Twój ${capitalize(p.name)} nie może dalej walczyć!`, 'text-rose-400 font-bold');
+                    const nextPlayer = battle.playerTeam.findIndex(m => m.hp > 0);
+                    if (nextPlayer === -1) {
+                        finishBattle(false);
+                        return;
+                    }
+                    setTimeout(() => {
+                        battle.pIdx = nextPlayer;
+                        logBattle(`Wchodzi Twój ${capitalize(battle.playerTeam[battle.pIdx].name)}!`, 'text-sky-300');
+                        battle.busy = false;
+                        updateBattleUI();
+                    }, 600);
+                } else {
+                    battle.busy = false;
+                    updateBattleUI();
+                }
+            }, 550);
+        }
+
+        function battleSwitchNext() {
+            if (!battle || battle.busy || battle.finished) return;
+            const aliveIndices = battle.playerTeam.map((m, i) => m.hp > 0 ? i : -1).filter(i => i !== -1 && i !== battle.pIdx);
+            if (aliveIndices.length === 0) {
+                showToast('Nie masz innych zdolnych do walki Pokémonów w drużynie!', 'info');
+                return;
+            }
+            battle.pIdx = aliveIndices[0];
+            logBattle(`🔄 Zmiana! Wchodzi ${capitalize(battle.playerTeam[battle.pIdx].name)}!`, 'text-indigo-300');
+            updateBattleUI();
+        }
+
+        function toggleAutoBattle() {
+            if (!battle || battle.finished) return;
+            battle.auto = !battle.auto;
+            const btn = document.getElementById('btn-atk-auto');
+            if (battle.auto) {
+                btn.innerHTML = '<i class="fa-solid fa-robot mr-1 animate-pulse"></i> Auto: WŁ';
+                autoBattleInterval = setInterval(() => {
+                    if (!battle || battle.finished) {
+                        clearInterval(autoBattleInterval);
+                        return;
+                    }
+                    if (!battle.busy) {
+                        battleAction(battle.energy >= 100 ? 'super' : 'normal');
+                    }
+                }, 450);
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-robot mr-1"></i> Auto: WYŁ';
+                clearInterval(autoBattleInterval);
+            }
+        }
+
+        function finishBattle(victory) {
+            battle.finished = true;
+            clearInterval(autoBattleInterval);
+
+            if (victory) {
+                playSound('catch');
+                const t = battle.trainer;
+                const firstWin = !state.badges.includes(t.id);
+                const coinsWon = firstWin ? t.rewardCoins : Math.round(t.rewardCoins * 0.5);
+                state.coins += coinsWon;
+
+                let extraMsg = '';
+                if (firstWin) {
+                    state.badges.push(t.id);
+                    state.balls[t.rewardBall.type] = (state.balls[t.rewardBall.type] || 0) + t.rewardBall.qty;
+                    extraMsg = `<div class="mt-3 flex flex-col items-center gap-1.5 text-amber-300 font-bold">
+                        <div class="w-12 h-12">${getBadgeSvg(t)}</div>
+                        <span>Zdobyto: ${t.badge} oraz ${t.rewardBall.qty}x ${BALLS[t.rewardBall.type].name}!</span>
+                    </div>`;
+                }
+
+                saveGame(false);
+                updateTopBar();
+                renderTrainers();
+
+                setTimeout(() => {
+                    document.getElementById('battle-modal').classList.add('hidden');
+                    openCustomModal(
+                        `<div class="text-5xl mb-2">🏆</div>
+                         <h3 class="text-xl font-black text-emerald-300">ZWYCIĘSTWO!</h3>
+                         <p class="text-sm text-slate-300 mt-2">Pokonałeś <b>${t.name}</b> i zdobywasz <b class="text-amber-300">+${coinsWon.toLocaleString('pl-PL')} monet</b>!</p>
+                         ${extraMsg}`,
+                        [{ text: 'Świetnie!', cls: 'bg-emerald-500 text-slate-950 font-black' }]
+                    );
+                }, 700);
+            } else {
+                playSound('fail');
+                setTimeout(() => {
+                    document.getElementById('battle-modal').classList.add('hidden');
+                    openCustomModal(
+                        `<div class="text-5xl mb-2">💔</div>
+                         <h3 class="text-xl font-black text-rose-400">Porażka</h3>
+                         <p class="text-sm text-slate-300 mt-2">Twoja drużyna została pokonana. Złap silniejsze Pokémony lub rozbuduj skład i spróbuj ponownie!</p>`,
+                        [{ text: 'Wróć', cls: 'bg-white/15 text-white' }]
+                    );
+                }, 700);
+            }
+        }
+
+        function fleeBattle() {
+            clearInterval(autoBattleInterval);
+            battle = null;
+            document.getElementById('battle-modal').classList.add('hidden');
+        }
+
+        /* =========================================================
+           11. ZAKŁADKA 4: JAJKA (INKUBATOR Z INLINE SVG)
+        ========================================================= */
+        function renderEggsTab() {
+            const select = document.getElementById('egg-region-select');
+            const prevVal = select.value;
+            select.innerHTML = state.unlockedRegions.map(gen => {
+                const r = REGIONS.find(x => x.gen === gen);
+                return `<option value="${r.gen}">Gen ${r.gen}: ${r.name}</option>`;
+            }).join('');
+            if (prevVal && state.unlockedRegions.includes(parseInt(prevVal, 10))) select.value = prevVal;
+
+            // Sklep z jajkami (SVG)
+            const shopCards = document.getElementById('egg-shop-cards');
+            const tiers = [
+                { id: 'common',    badge: 'ZWYKŁE',     badgeCls: 'bg-slate-600/40 text-slate-200',  title: 'Zwykłe Jajko',     titleCls: 'text-white',     time: '30s',  cost: 250,  desc: 'Losowy Pokémon z wybranego regionu. 2% szansy na Shiny.',           btnCls: 'bg-gradient-to-r from-slate-600 to-slate-700 text-white',      border: 'border-slate-500/30' },
+                { id: 'rare',      badge: 'RZADKIE',    badgeCls: 'bg-sky-500/25 text-sky-300',      title: 'Rzadkie Jajko',    titleCls: 'text-sky-300',   time: '60s',  cost: 900,  desc: 'Wysoka szansa na silnego Pokémona z regionu. 3% szansy na Shiny.',  btnCls: 'bg-gradient-to-r from-sky-500 to-indigo-600 text-white',       border: 'border-sky-400/40' },
+                { id: 'legendary', badge: 'LEGENDARNE', badgeCls: 'bg-amber-500/25 text-amber-300',  title: 'Legendarne Jajko', titleCls: 'text-amber-300', time: '120s', cost: 3500, desc: 'Gwarantowany Pokémon Epicki lub Legendarny! 5% szansy na Shiny.',   btnCls: 'bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 font-black', border: 'border-amber-400/50' }
+            ];
+            shopCards.innerHTML = tiers.map(t => `
+                <div class="glass rounded-2xl p-5 ${t.border} flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-extrabold px-2.5 py-1 rounded-lg ${t.badgeCls}">${t.badge}</span>
+                            <span class="text-xs text-slate-400"><i class="fa-regular fa-clock mr-1"></i>${t.time}</span>
+                        </div>
+                        <div class="w-20 h-24 mx-auto my-2">${getEggSvg(t.id)}</div>
+                        <h4 class="font-extrabold text-base ${t.titleCls} text-center">${t.title}</h4>
+                        <p class="text-xs text-slate-400 text-center mt-1">${t.desc}</p>
+                    </div>
+                    <button onclick="buyEgg('${t.id}')" class="game-btn mt-4 w-full py-2.5 rounded-xl ${t.btnCls} font-bold text-sm flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-coins"></i> ${t.cost.toLocaleString('pl-PL')} monet
+                    </button>
+                </div>
+            `).join('');
+
+            renderIncubatorSlots();
+        }
+
+        function renderIncubatorSlots() {
+            const container = document.getElementById('incubator-slots');
+            document.getElementById('egg-slots-count').textContent = `${state.eggs.length} / 3 slotów`;
+
+            let html = '';
+            for (let i = 0; i < 3; i++) {
+                const egg = state.eggs[i];
+                if (egg) {
+                    const ready = egg.remaining <= 0;
+                    const pct = Math.min(100, Math.max(0, ((egg.duration - egg.remaining) / egg.duration) * 100));
+                    const region = REGIONS.find(r => r.gen === egg.gen) || REGIONS[0];
+                    const tierMeta = {
+                        common:    { label: 'Zwykłe',     border: 'border-slate-500/40', bar: 'bg-slate-400' },
+                        rare:      { label: 'Rzadkie',    border: 'border-sky-400/50',   bar: 'bg-sky-400' },
+                        legendary: { label: 'Legendarne', border: 'border-amber-400/60', bar: 'bg-amber-400' }
+                    }[egg.tier];
+
+                    html += `
+                        <div class="glass rounded-2xl p-5 border ${ready ? 'border-emerald-400 shadow-lg shadow-emerald-500/20' : tierMeta.border} flex flex-col items-center text-center">
+                            <span class="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-lg bg-white/10 text-slate-200">${tierMeta.label} • ${region.name}</span>
+
+                            <div id="egg-icon-${egg.uid}" onclick="${ready ? `hatchEgg('${egg.uid}')` : `tapEgg('${egg.uid}', event)`}" class="w-20 h-24 my-4 cursor-pointer select-none transition-transform active:scale-90 ${ready ? 'animate-egg-ready' : ''}">
+                                ${getEggSvg(egg.tier)}
+                            </div>
+
+                            ${ready
+                                ? `<button onclick="hatchEgg('${egg.uid}')" class="game-btn w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-400 to-teal-500 text-slate-950 font-black text-sm shadow-lg shadow-emerald-500/25">
+                                       ✨ Wykluj Pokémona!
+                                   </button>`
+                                : `<div class="w-full">
+                                       <div class="flex justify-between text-xs font-bold mb-1">
+                                           <span class="text-slate-400">Kliknij jajko (-2s)</span>
+                                           <span class="text-white tabular-nums">${Math.ceil(egg.remaining)}s</span>
+                                       </div>
+                                       <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
+                                           <div class="hp-bar-fill h-full ${tierMeta.bar}" style="width:${pct}%"></div>
+                                       </div>
+                                   </div>`
+                            }
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="rounded-2xl p-6 border border-dashed border-white/15 bg-white/[0.02] flex flex-col items-center justify-center text-slate-500 min-h-[215px]">
+                            <i class="fa-solid fa-plus text-2xl mb-2 opacity-40"></i>
+                            <span class="text-xs font-semibold">Wolny slot inkubatora</span>
+                        </div>
+                    `;
+                }
+            }
+            container.innerHTML = html;
+        }
+
+        function buyEgg(tier) {
+            if (state.eggs.length >= 3) {
+                showToast('Inkubator jest pełny (max 3 jajka)! Wykluj najpierw obecne.', 'error');
+                return;
+            }
+            const costs = { common: 250, rare: 900, legendary: 3500 };
+            const durations = { common: 30, rare: 60, legendary: 120 };
+            const cost = costs[tier];
+
+            if (state.coins < cost) {
+                showToast(`Za mało monet! Potrzebujesz ${cost.toLocaleString('pl-PL')} monet.`, 'error');
+                return;
+            }
+
+            const gen = parseInt(document.getElementById('egg-region-select').value, 10) || 1;
+            state.coins -= cost;
+            state.eggs.push({
+                uid: 'egg_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5),
+                tier,
+                gen,
+                duration: durations[tier],
+                remaining: durations[tier]
+            });
+
+            playSound('click');
+            showToast('Jajko umieszczono w inkubatorze!', 'success');
+            saveGame(false);
+            updateTopBar();
+            renderIncubatorSlots();
+        }
+
+        function tapEgg(uid, evt) {
+            const egg = state.eggs.find(e => e.uid === uid);
+            if (!egg || egg.remaining <= 0) return;
+
+            egg.remaining = Math.max(0, egg.remaining - 2);
+            playSound('click');
+
+            const icon = document.getElementById(`egg-icon-${uid}`);
+            if (icon) {
+                icon.classList.remove('animate-egg-wobble');
+                void icon.offsetWidth;
+                icon.classList.add('animate-egg-wobble');
+            }
+
+            if (evt) spawnFloatingNumber('-2s', evt.clientX, evt.clientY - 15, 'text-emerald-300');
+            renderIncubatorSlots();
+            updateTopBar();
+        }
+
+        async function hatchEgg(uid) {
+            const idx = state.eggs.findIndex(e => e.uid === uid);
+            if (idx === -1) return;
+            const egg = state.eggs[idx];
+            if (egg.remaining > 0) return;
+
+            state.eggs.splice(idx, 1);
+            const region = REGIONS.find(r => r.gen === egg.gen) || REGIONS[0];
+
+            let pokeId;
+            if (egg.tier === 'legendary') {
+                pokeId = region.elites[Math.floor(Math.random() * region.elites.length)];
+            } else if (egg.tier === 'rare') {
+                pokeId = Math.random() < 0.5
+                    ? region.elites[Math.floor(Math.random() * region.elites.length)]
+                    : Math.floor(Math.random() * (region.max - region.min + 1)) + region.min;
+            } else {
+                pokeId = Math.floor(Math.random() * (region.max - region.min + 1)) + region.min;
+            }
+
+            const shinyChance = egg.tier === 'legendary' ? 0.05 : egg.tier === 'rare' ? 0.03 : 0.02;
+            const isShiny = Math.random() < shinyChance;
+
+            const data = await fetchPokemonData(pokeId);
+            const stats = computeStats(data, isShiny);
+            addPokemonToCollection(data, isShiny);
+
+            playSound(isShiny ? 'shiny' : 'catch');
+            saveGame(false);
+            updateTopBar();
+            renderIncubatorSlots();
+
+            openCustomModal(
+                `<div class="text-xs font-extrabold uppercase tracking-wider text-emerald-300 mb-1">🎉 Jajko się wykluło!</div>
+                 <div class="relative inline-block my-2">
+                     <img src="${getArtworkUrl(data.id, isShiny)}" referrerpolicy="no-referrer" onerror="window.handlePokeImgError(this, ${data.id}, ${isShiny})" class="w-36 h-36 object-contain mx-auto animate-float drop-shadow-[0_14px_20px_rgba(0,0,0,0.6)]">
+                 </div>
+                 <h3 class="text-2xl font-black text-white capitalize">${isShiny ? '✨ Shiny ' : ''}${data.name}</h3>
+                 <div class="flex justify-center gap-1.5 mt-1.5">${renderTypeBadges(data.types)}</div>
+                 <div class="mt-3 flex justify-center gap-4 text-sm font-bold">
+                     <span class="text-sky-300">${stats.cp} CP</span>
+                     <span class="text-emerald-400">+${Math.round(stats.income * getGlobalMultiplier())}/s</span>
+                     <span class="px-2 py-0.5 rounded-md text-xs ${stats.rarity.bg}">${stats.rarity.label}</span>
+                 </div>`,
+                [{ text: 'Dodano do Kolekcji!', cls: 'bg-gradient-to-r from-emerald-400 to-teal-500 text-slate-950 font-black' }]
+            );
+        }
+
+        /* =========================================================
+           12. ZAKŁADKA 5: SKLEP, ULEPSZENIA, REGIONY I KODY
+        ========================================================= */
+        function renderShop() {
+            const ballsGrid = document.getElementById('shop-balls-grid');
+            ballsGrid.innerHTML = Object.values(BALLS).map(b => {
+                const bulkPrice = Math.round(b.price * 9);
+                return `
+                    <div class="glass rounded-2xl p-4 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="font-extrabold text-white text-sm">${b.name}</span>
+                                <span class="text-xs font-bold px-2 py-0.5 rounded-md bg-white/10 text-sky-300">Masz: ${state.balls[b.id] || 0}</span>
+                            </div>
+                            <div class="w-16 h-16 mx-auto my-2">${getPokeballSvg(b.id)}</div>
+                            <p class="text-[11px] text-slate-400 text-center">${b.desc}</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 mt-4">
+                            <button onclick="buyBall('${b.id}', 1, ${b.price})" class="game-btn py-2 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-bold text-white">
+                                x1 <span class="text-amber-300 block">${b.price.toLocaleString('pl-PL')}</span>
+                            </button>
+                            <button onclick="buyBall('${b.id}', 10, ${bulkPrice})" class="game-btn py-2 rounded-xl bg-gradient-to-r from-sky-500/80 to-indigo-600/80 text-xs font-bold text-white">
+                                x10 (-10%) <span class="text-amber-200 block">${bulkPrice.toLocaleString('pl-PL')}</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Mnożnik Zarobku Pasywnego
+            const upgradeCost = Math.round(500 * Math.pow(1.65, (state.incomeUpgradeLvl || 1) - 1));
+            document.getElementById('upgrade-lvl-badge').textContent = `Poz. ${state.incomeUpgradeLvl || 1}`;
+            document.getElementById('upgrade-current-mult').textContent = `x${getGlobalMultiplier().toFixed(2)}`;
+            document.getElementById('upgrade-cost').textContent = upgradeCost.toLocaleString('pl-PL');
+
+            // Moc Klikania
+            const clickLvl = state.clickUpgradeLvl || 1;
+            const clickCost = Math.round(300 * Math.pow(1.6, clickLvl - 1));
+            document.getElementById('click-lvl-badge').textContent = `Poz. ${clickLvl}`;
+            document.getElementById('click-current-val').textContent = `+${getClickReward().toLocaleString('pl-PL')}`;
+            document.getElementById('click-upgrade-cost').textContent = clickCost.toLocaleString('pl-PL');
+
+            // Podgląd jajka SVG
+            document.getElementById('shop-egg-preview-svg').innerHTML = getEggSvg('legendary');
+
+            // Wykorzystane kody
+            const codesInfo = document.getElementById('redeemed-codes-info');
+            codesInfo.textContent = state.usedCodes.length > 0
+                ? `Wykorzystane kody: ${state.usedCodes.join(', ')}`
+                : 'Nie wykorzystano jeszcze żadnego kodu.';
+
+            // Regiony
+            const regGrid = document.getElementById('shop-regions-grid');
+            regGrid.innerHTML = REGIONS.map(r => {
+                const unlocked = state.unlockedRegions.includes(r.gen);
+                return `
+                    <div class="glass rounded-2xl p-4 flex items-center justify-between gap-3 border ${unlocked ? 'border-emerald-400/35' : 'border-white/10'}">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full" style="background:${r.color}"></span>
+                                <span class="font-extrabold text-sm text-white">Gen ${r.gen}: ${r.name}</span>
+                            </div>
+                            <div class="text-xs text-slate-400 mt-0.5">Pokédex #${r.min} – #${r.max}</div>
+                        </div>
+                        ${unlocked
+                            ? `<span class="text-xs font-black px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">Odblokowany</span>`
+                            : `<button onclick="unlockRegion(${r.gen})" class="game-btn px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black text-xs shrink-0">
+                                   <i class="fa-solid fa-lock-open mr-1"></i> ${r.cost.toLocaleString('pl-PL')}
+                               </button>`
+                        }
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function buyBall(ballId, qty, cost) {
+            if (state.coins < cost) {
+                showToast(`Za mało monet! Brakuje ${(cost - Math.floor(state.coins)).toLocaleString('pl-PL')} monet.`, 'error');
+                return;
+            }
+            state.coins -= cost;
+            state.balls[ballId] = (state.balls[ballId] || 0) + qty;
+            playSound('click');
+            showToast(`Kupiono ${qty}x ${BALLS[ballId].name}!`, 'success');
+            saveGame(false);
+            updateTopBar();
+            renderShop();
+            renderBallButtons();
+        }
+
+        function buyIncomeUpgrade() {
+            const cost = Math.round(500 * Math.pow(1.65, (state.incomeUpgradeLvl || 1) - 1));
+            if (state.coins < cost) {
+                showToast(`Za mało monet! Potrzebujesz ${cost.toLocaleString('pl-PL')} monet.`, 'error');
+                return;
+            }
+            state.coins -= cost;
+            state.incomeUpgradeLvl = (state.incomeUpgradeLvl || 1) + 1;
+            playSound('catch');
+            showToast(`Mnożnik zarobku ulepszony do x${getGlobalMultiplier().toFixed(2)}!`, 'success');
+            saveGame(false);
+            updateTopBar();
+            renderShop();
+        }
+
+        function buyClickUpgrade() {
+            const lvl = state.clickUpgradeLvl || 1;
+            const cost = Math.round(300 * Math.pow(1.6, lvl - 1));
+            if (state.coins < cost) {
+                showToast(`Za mało monet! Potrzebujesz ${cost.toLocaleString('pl-PL')} monet.`, 'error');
+                return;
+            }
+            state.coins -= cost;
+            state.clickUpgradeLvl = lvl + 1;
+            playSound('catch');
+            showToast(`Moc klikania ulepszona do poziomu ${state.clickUpgradeLvl}!`, 'success');
+            saveGame(false);
+            updateTopBar();
+            renderShop();
+        }
+
+        function unlockRegion(gen) {
+            const region = REGIONS.find(r => r.gen === gen);
+            if (!region || state.unlockedRegions.includes(gen)) return;
+            if (state.coins < region.cost) {
+                showToast(`Za mało monet! Odblokowanie ${region.name} kosztuje ${region.cost.toLocaleString('pl-PL')} monet.`, 'error');
+                return;
+            }
+            state.coins -= region.cost;
+            state.unlockedRegions.push(gen);
+            state.unlockedRegions.sort((a, b) => a - b);
+            playSound('catch');
+            showToast(`🌍 Odblokowano region ${region.name} (Gen ${region.gen})!`, 'success');
+            saveGame(false);
+            updateTopBar();
+            renderShop();
+            renderHuntRegions();
+        }
+
+        function redeemPromoCode() {
+            const input = document.getElementById('promo-code-input');
+            const code = input.value.trim().toUpperCase();
+            if (!code) return;
+
+            if (!PROMO_CODES[code]) {
+                playSound('fail');
+                showToast('Nieprawidłowy kod promocyjny!', 'error');
+                return;
+            }
+            if (state.usedCodes.includes(code)) {
+                playSound('fail');
+                showToast('Ten kod został już wykorzystany!', 'error');
+                return;
+            }
+
+            const reward = PROMO_CODES[code];
+            state.usedCodes.push(code);
+            state.coins += reward.coins || 0;
+            if (reward.balls) {
+                Object.entries(reward.balls).forEach(([bId, qty]) => {
+                    state.balls[bId] = (state.balls[bId] || 0) + qty;
+                });
+            }
+
+            input.value = '';
+            playSound('shiny');
+            showToast(`🎁 Kod ${code} aktywowany! (${reward.desc})`, 'shiny');
+            saveGame(false);
+            updateTopBar();
+            renderShop();
+            renderBallButtons();
+        }
+
+        /* =========================================================
+           13. ZAKŁADKA 6: POKÉDEX (1–1025 + WYSZUKIWARKA)
+        ========================================================= */
+        function renderPokedex() {
+            const query = (document.getElementById('pokedex-search').value || '').trim().toLowerCase();
+
+            const tabs = document.getElementById('pokedex-gen-tabs');
+            tabs.innerHTML = REGIONS.map(r => {
+                let discovered = 0;
+                for (let id = r.min; id <= r.max; id++) {
+                    if (state.pokedex[id]) discovered++;
+                }
+                const total = r.max - r.min + 1;
+                const active = activePokedexGen === r.gen && !query;
+                return `
+                    <button onclick="selectPokedexGen(${r.gen})" class="game-btn px-3 py-1.5 rounded-xl text-xs font-bold border ${
+                        active ? 'bg-cyan-500/25 border-cyan-400 text-white' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+                    }">
+                        Gen ${r.gen} <span class="text-[10px] opacity-75">(${discovered}/${total})</span>
+                    </button>
+                `;
+            }).join('');
+
+            const region = REGIONS.find(r => r.gen === activePokedexGen) || REGIONS[0];
+            const minId = query ? 1 : region.min;
+            const maxId = query ? 1025 : region.max;
+
+            let discoveredCount = 0;
+            let matchedCount = 0;
+            let html = '';
+
+            for (let id = minId; id <= maxId; id++) {
+                const entry = state.pokedex[id];
+                const data = apiCache[id] || (LOCAL_POKE_DICT[id] ? getFallbackPokemonData(id) : null);
+                const knownName = data ? data.name.toLowerCase() : '';
+
+                if (query) {
+                    const idStr = String(id);
+                    const paddedStr = idStr.padStart(4, '0');
+                    const matchId = idStr === query || paddedStr.includes(query) || (`#${idStr}` === query);
+                    const matchName = knownName && knownName.includes(query);
+                    if (!matchId && !matchName) continue;
+                    matchedCount++;
+                    if (matchedCount > 120) break;
+                }
+
+                if (entry) {
+                    discoveredCount++;
+                    const name = data ? data.name : `#${id}`;
+                    const typeColor = data ? (TYPE_META[data.types[0]] || { color: '#38bdf8' }).color : '#38bdf8';
+
+                    html += `
+                        <div onclick="openPokedexDetail(${id})" class="cursor-pointer glass rounded-2xl p-2.5 flex flex-col items-center text-center hover:-translate-y-1 transition-all relative" style="border-color:${typeColor}55">
+                            <div class="w-full flex justify-between text-[10px] font-bold text-slate-400">
+                                <span>#${String(id).padStart(4, '0')}</span>
+                                ${entry.shiny ? '<span title="Złapano Shiny">✨</span>' : ''}
+                            </div>
+                            <img src="${getArtworkUrl(id, false)}" referrerpolicy="no-referrer" onerror="window.handlePokeImgError(this, ${id}, false)" alt="${name}" class="w-16 h-16 sm:w-20 sm:h-20 object-contain my-1" loading="lazy">
+                            <div class="text-[11px] font-extrabold text-white capitalize truncate w-full">${name}</div>
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="rounded-2xl p-2.5 bg-white/[0.025] border border-white/5 flex flex-col items-center justify-center text-center min-h-[124px]">
+                            <div class="text-[10px] font-bold text-slate-600 self-start">#${String(id).padStart(4, '0')}</div>
+                            <img src="${getArtworkUrl(id, false)}" referrerpolicy="no-referrer" onerror="window.handlePokeImgError(this, ${id}, false)" alt="Nieodkryty" class="w-14 h-14 sm:w-16 sm:h-16 object-contain my-1 pokedex-silhouette" loading="lazy">
+                            <div class="text-[10px] font-semibold text-slate-600">Nieodkryty</div>
+                        </div>
+                    `;
+                }
+            }
+
+            if (query) {
+                document.getElementById('pokedex-gen-progress').textContent = `Wyniki: ${matchedCount}`;
+            } else {
+                document.getElementById('pokedex-gen-progress').textContent = `Gen ${region.gen}: ${discoveredCount} / ${region.max - region.min + 1}`;
+            }
+
+            document.getElementById('pokedex-grid').innerHTML = html ||
+                `<div class="col-span-full glass rounded-2xl p-8 text-center text-slate-400 text-sm">Brak wyników dla „${query}”.</div>`;
+        }
+
+        function selectPokedexGen(gen) {
+            playSound('click');
+            document.getElementById('pokedex-search').value = '';
+            activePokedexGen = gen;
+            renderPokedex();
+        }
+
+        async function openPokedexDetail(id) {
+            const data = await fetchPokemonData(id);
+            const stats = computeStats(data, false);
+            const entry = state.pokedex[id];
+
+            openCustomModal(
+                `<div class="flex items-center justify-between text-xs font-extrabold text-slate-400 mb-2">
+                     <span>#${String(data.id).padStart(4, '0')} • Gen ${data.gen}</span>
+                     <span class="px-2 py-0.5 rounded-md ${stats.rarity.bg}">${stats.rarity.label}</span>
+                 </div>
+                 <img src="${getArtworkUrl(data.id, false)}" referrerpolicy="no-referrer" onerror="window.handlePokeImgError(this, ${data.id}, false)" class="w-36 h-36 object-contain mx-auto animate-float">
+                 <h3 class="text-2xl font-black text-white capitalize mt-1">${data.name}</h3>
+                 <div class="flex justify-center gap-1.5 mt-1.5">${renderTypeBadges(data.types)}</div>
+                 <div class="grid grid-cols-2 gap-2 mt-4 text-xs bg-black/30 p-3 rounded-2xl border border-white/10">
+                     <div><span class="text-slate-400">Suma statystyk (BST):</span> <b class="text-white">${data.bst}</b></div>
+                     <div><span class="text-slate-400">Bazowe CP:</span> <b class="text-sky-300">${stats.cp}</b></div>
+                     <div><span class="text-slate-400">HP / Atak:</span> <b class="text-emerald-300">${data.hp} / ${data.atk}</b></div>
+                     <div><span class="text-slate-400">Zarobek bazowy:</span> <b class="text-amber-300">+${stats.income}/s</b></div>
+                 </div>
+                 ${entry && entry.shiny ? '<div class="mt-3 text-xs font-bold text-amber-300">✨ Posiadasz wpis wersji Shiny tego gatunku!</div>' : ''}`,
+                [{ text: 'Zamknij', cls: 'bg-white/15 text-white' }]
+            );
+        }
+
+        /* =========================================================
+           14. SYSTEM ZAPISU, EKSPORTU I IMPORTU (LOCALSTORAGE + BASE64)
+        ========================================================= */
+        function saveGame(showNotification = false) {
+            try {
+                localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+                if (showNotification) showToast('Gra została zapisana!', 'success');
+            } catch (e) {
+                if (showNotification) showToast('Błąd zapisu w przeglądarce.', 'error');
+            }
+        }
+
+        function manualSave() {
+            playSound('click');
+            saveGame(true);
+        }
+
+        function loadGame() {
+            try {
+                const cached = localStorage.getItem(CACHE_KEY);
+                if (cached) apiCache = JSON.parse(cached);
+            } catch (e) { apiCache = {}; }
+
+            try {
+                const raw = localStorage.getItem(SAVE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    state = { ...getDefaultState(), ...parsed };
+                    soundEnabled = state.sound !== false;
+                }
+            } catch (e) {
+                state = getDefaultState();
+            }
+        }
+
+        function openSaveModal() {
+            playSound('click');
+            try {
+                const json = JSON.stringify(state);
+                const encoded = btoa(unescape(encodeURIComponent(json)));
+                document.getElementById('save-base64-text').value = encoded;
+                document.getElementById('save-modal').classList.remove('hidden');
+            } catch (e) {
+                showToast('Nie udało się wygenerować kodu zapisu.', 'error');
+            }
+        }
+
+        function closeSaveModal() {
+            document.getElementById('save-modal').classList.add('hidden');
+        }
+
+        function copySaveCode() {
+            const textarea = document.getElementById('save-base64-text');
+            textarea.select();
+            textarea.setSelectionRange(0, 999999);
+            try {
+                document.execCommand('copy');
+                showToast('Kod zapisu skopiowany do schowka!', 'success');
+            } catch (e) {
+                showToast('Zaznacz kod i skopiuj ręcznie (Ctrl+C).', 'info');
+            }
+        }
+
+        function importSaveCode() {
+            const raw = document.getElementById('save-base64-text').value.trim();
+            if (!raw) return;
+            try {
+                const json = decodeURIComponent(escape(atob(raw)));
+                const parsed = JSON.parse(json);
+                if (typeof parsed.coins !== 'number' || !Array.isArray(parsed.collection)) {
+                    throw new Error('Nieprawidłowy format');
+                }
+                state = { ...getDefaultState(), ...parsed };
+                saveGame(false);
+                closeSaveModal();
+                updateTopBar();
+                renderHuntRegions();
+                renderBallButtons();
+                switchTab(activeTab);
+                showToast('Zapis gry został pomyślnie wczytany!', 'success');
+            } catch (e) {
+                showToast('Nieprawidłowy lub uszkodzony kod zapisu Base64!', 'error');
+            }
+        }
+
+        function promptResetGame() {
+            closeSaveModal();
+            openCustomModal(
+                `<div class="text-4xl mb-2">⚠️</div>
+                 <h3 class="text-lg font-black text-rose-400">Zresetować cały postęp?</h3>
+                 <p class="text-sm text-slate-300 mt-2">Stracisz wszystkie złapane Pokémony, monety i odznaki. Tej operacji nie można cofnąć.</p>`,
+                [
+                    { text: 'Anuluj', cls: 'bg-white/10 text-white' },
+                    {
+                        text: 'Tak, zresetuj',
+                        cls: 'bg-rose-600 text-white',
+                        onClick: () => {
+                            localStorage.removeItem(SAVE_KEY);
+                            state = getDefaultState();
+                            updateTopBar();
+                            renderHuntRegions();
+                            findWildPokemon();
+                            switchTab('hunt');
+                            showToast('Postęp został zresetowany.', 'info');
+                        }
+                    }
+                ]
+            );
+        }
+
+        function capitalize(str) {
+            return str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
+        }
+
+        /* =========================================================
+           15. GŁÓWNA PĘTLA CZASOWA I START GRY
+        ========================================================= */
+        function startGameLoops() {
+            setInterval(() => {
+                const income = getTotalPassiveIncome();
+                if (income > 0) {
+                    state.coins += income;
+                }
+
+                let eggChanged = false;
+                state.eggs.forEach(e => {
+                    if (e.remaining > 0) {
+                        e.remaining = Math.max(0, e.remaining - 1);
+                        eggChanged = true;
+                    }
+                });
+
+                updateTopBar();
+                if (eggChanged && activeTab === 'eggs') {
+                    renderIncubatorSlots();
+                }
+            }, 1000);
+
+            setInterval(() => saveGame(false), 5000);
+        }
+
+        window.onload = async function () {
+            loadGame();
+            updateSoundButton();
+            updateTopBar();
+            renderHuntRegions();
+            switchTab('hunt');
+
+            // Wstępne dociągnięcie w tle brakujących nazw z API dla posiadanych Pokémonów
+            const missingIds = [...new Set(state.collection.map(c => c.id).filter(id => !apiCache[id] || apiCache[id].isFallback))];
+            if (missingIds.length > 0) {
+                Promise.all(missingIds.slice(0, 12).map(id => fetchPokemonData(id))).then(() => updateTopBar());
+            }
+
+            // Natychmiastowe wylosowanie i pokazanie pierwszego dzikiego Pokémona
+            await findWildPokemon();
+            startGameLoops();
+        };
+    </script>
+</body>
+</html>
